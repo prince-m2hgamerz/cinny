@@ -10,6 +10,8 @@ const VERIFIED_USERS: Record<string, UserIdentityMeta> = {
     tag: 'CEO',
   },
   '@admin:vgram.m2hio.in': {},
+  '@verma6307:vgram.m2hio.in': {},
+  '@krish:vgram.m2hio.in': {},
 };
 
 export const getUserIdentityMeta = (

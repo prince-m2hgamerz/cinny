@@ -18,8 +18,48 @@ import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/co
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { getStateEvent } from './room';
 import { Membership, StateEvent } from '../../types/matrix/room';
+import { getFallbackSession } from '../state/sessions';
 
 const DOMAIN_REGEX = /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b/;
+const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
+
+const hasWebCryptoSupport = (): boolean =>
+  typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.subtle !== 'undefined';
+
+const requireWebCryptoSupport = (action: 'encrypt' | 'decrypt'): void => {
+  if (hasWebCryptoSupport()) return;
+
+  throw new Error(
+    `Encrypted attachments require a secure browser context. Open VChat over HTTPS or http://localhost to ${action} files.`
+  );
+};
+
+const getMediaFetchOptions = (src: string): RequestInit => {
+  const session = getFallbackSession();
+
+  if (!session?.accessToken || !session.baseUrl) {
+    return { method: 'GET' };
+  }
+
+  try {
+    const mediaUrl = new URL(src);
+    const baseUrl = new URL(session.baseUrl);
+    const validMediaPath = MEDIA_PATHS.some((path) => mediaUrl.pathname.startsWith(path));
+
+    if (!validMediaPath || mediaUrl.origin !== baseUrl.origin) {
+      return { method: 'GET' };
+    }
+
+    return {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    };
+  } catch {
+    return { method: 'GET' };
+  }
+};
 
 export const isServerName = (serverName: string): boolean => DOMAIN_REGEX.test(serverName);
 
@@ -111,6 +151,7 @@ export const encryptFile = async (
   file: File;
   originalFile: File | Blob;
 }> => {
+  requireWebCryptoSupport('encrypt');
   const dataBuffer = await file.arrayBuffer();
   const encryptedAttachment = await encryptAttachment(dataBuffer);
   const encFile = new File([encryptedAttachment.data], file.name, {
@@ -128,6 +169,7 @@ export const decryptFile = async (
   type: string,
   encInfo: EncryptedAttachmentInfo
 ): Promise<Blob> => {
+  requireWebCryptoSupport('decrypt');
   const dataArray = await decryptAttachment(dataBuffer, encInfo);
   const blob = new Blob([dataArray], { type });
   return blob;
@@ -297,8 +339,10 @@ export const mxcUrlToHttp = (
   );
 
 export const downloadMedia = async (src: string): Promise<Blob> => {
-  // this request is authenticated by service worker
-  const res = await fetch(src, { method: 'GET' });
+  const res = await fetch(src, getMediaFetchOptions(src));
+  if (!res.ok) {
+    throw new Error(`Failed to download media (${res.status} ${res.statusText})`);
+  }
   const blob = await res.blob();
   return blob;
 };

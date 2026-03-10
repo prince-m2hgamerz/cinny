@@ -109,12 +109,19 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     const handleRetry = () => {
       setError(false);
-      loadSrc();
+      loadSrc().catch(() => undefined);
     };
 
     useEffect(() => {
-      if (autoPlay) loadSrc();
+      if (autoPlay) {
+        loadSrc().catch(() => undefined);
+      }
     }, [autoPlay, loadSrc]);
+
+    const errorMessage =
+      srcState.status === AsyncStatus.Error && srcState.error instanceof Error
+        ? srcState.error.message
+        : 'Failed to load image!';
 
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
@@ -225,7 +232,7 @@ export const ImageContent = as<'div', ImageContentProps>(
             <TooltipProvider
               tooltip={
                 <Tooltip variant="Critical">
-                  <Text>Failed to load image!</Text>
+                  <Text>{errorMessage}</Text>
                 </Tooltip>
               }
               position="Top"

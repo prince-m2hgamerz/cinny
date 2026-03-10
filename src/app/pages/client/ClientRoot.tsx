@@ -20,6 +20,7 @@ import {
   clearCacheAndReload,
   clearLoginData,
   initClient,
+  isCryptoStoreSchemaTooNewError,
   logoutClient,
   startClient,
 } from '../../../client/initMatrix';
@@ -183,6 +184,10 @@ export function ClientRoot({ children }: ClientRootProps) {
     }, [])
   );
 
+  const cryptoSchemaTooNew =
+    (loadState.status === AsyncStatus.Error && isCryptoStoreSchemaTooNewError(loadState.error)) ||
+    (startState.status === AsyncStatus.Error && isCryptoStoreSchemaTooNewError(startState.error));
+
   return (
     <AutoDiscovery userId={userId!} baseUrl={baseUrl!}>
       <SpecVersions baseUrl={baseUrl!}>
@@ -205,11 +210,24 @@ export function ClientRoot({ children }: ClientRootProps) {
                   {startState.status === AsyncStatus.Error && (
                     <Text>{`Failed to start. ${startState.error.message}`}</Text>
                   )}
+                  {cryptoSchemaTooNew && (
+                    <Text size="T300" priority="400">
+                      This browser has an incompatible old encryption database for this site. Reset
+                      local app data to continue.
+                    </Text>
+                  )}
                   <Button variant="Critical" onClick={mx ? () => startMatrix(mx) : loadMatrix}>
                     <Text as="span" size="B400">
                       Retry
                     </Text>
                   </Button>
+                  {cryptoSchemaTooNew && (
+                    <Button variant="Secondary" fill="Soft" onClick={clearLoginData}>
+                      <Text as="span" size="B400">
+                        Reset Local Data
+                      </Text>
+                    </Button>
+                  )}
                 </Box>
               </Dialog>
             </Box>

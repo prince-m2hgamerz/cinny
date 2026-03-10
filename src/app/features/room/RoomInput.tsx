@@ -14,6 +14,7 @@ import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
 import {
   Box,
+  Button,
   Dialog,
   Icon,
   IconButton,
@@ -118,6 +119,11 @@ import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
 
+const getAttachmentErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message) return error.message;
+  return 'Failed to prepare one or more files for upload.';
+};
+
 interface RoomInputProps {
   editor: Editor;
   fileDropContainerRef: RefObject<HTMLElement>;
@@ -161,6 +167,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       legacyUsernameColor || direct ? colorMXID(replyUserID ?? '') : replyPowerColor;
 
     const [uploadBoard, setUploadBoard] = useState(true);
+    const [attachmentError, setAttachmentError] = useState<string>();
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
       roomUploadAtomFamily,
@@ -178,14 +185,27 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleFiles = useCallback(
       async (files: File[]) => {
-        setUploadBoard(true);
+        setAttachmentError(undefined);
         const safeFiles = files.map(safeFile);
         const fileItems: TUploadItem[] = [];
 
         if (room.hasEncryptionStateEvent()) {
-          const encryptFiles = fulfilledPromiseSettledResult(
-            await Promise.allSettled(safeFiles.map((f) => encryptFile(f)))
+          const encryptResults = await Promise.allSettled(safeFiles.map((f) => encryptFile(f)));
+          const encryptFiles = fulfilledPromiseSettledResult(encryptResults);
+          const failedEncryptions = encryptResults.filter(
+            (result): result is PromiseRejectedResult => result.status === 'rejected'
           );
+
+          if (failedEncryptions.length > 0) {
+            const failureMessage = getAttachmentErrorMessage(failedEncryptions[0].reason);
+            const partialFailure =
+              failedEncryptions.length < safeFiles.length
+                ? ` ${failedEncryptions.length} file${failedEncryptions.length > 1 ? 's were' : ' was'} skipped.`
+                : '';
+
+            setAttachmentError(`${failureMessage}${partialFailure}`);
+          }
+
           encryptFiles.forEach((ef) =>
             fileItems.push({
               ...ef,
@@ -206,6 +226,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             })
           );
         }
+
+        if (fileItems.length === 0) return;
+
+        setUploadBoard(true);
         setSelectedFiles({
           type: 'PUT',
           item: fileItems,
@@ -448,6 +472,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     return (
       <div ref={ref}>
+        <Overlay open={!!attachmentError} backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <Dialog variant="Surface">
+              <Box direction="Column" gap="400" style={{ padding: config.space.S400, maxWidth: toRem(360) }}>
+                <Text size="H4">Attachment Error</Text>
+                <Text size="T300">{attachmentError}</Text>
+                <Button variant="Secondary" fill="Soft" onClick={() => setAttachmentError(undefined)}>
+                  <Text size="B400">Close</Text>
+                </Button>
+              </Box>
+            </Dialog>
+          </OverlayCenter>
+        </Overlay>
         {selectedFiles.length > 0 && (
           <UploadBoard
             header={

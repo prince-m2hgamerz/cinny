@@ -234,10 +234,10 @@ function LegacyCallOverlay({
         <Box className={css.CallOverlayCard}>
           <Box className={css.HeaderRow}>
             <Box className={css.HeaderMeta}>
-              <Text size="H4" truncate>
+              <Text size="H4" truncate className={css.HeaderTitle}>
                 {title}
               </Text>
-              <Text size="T300" priority="300">
+              <Text size="T300" priority="300" className={css.HeaderSubtitle}>
                 {statusText}
               </Text>
             </Box>

@@ -16,9 +16,14 @@ export const CallOverlayCard = style({
   border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
   boxShadow: `0 ${toRem(24)} ${toRem(64)} rgba(0, 0, 0, 0.45)`,
   '@media': {
-    'screen and (max-width: 720px)': {
+    'screen and (max-width: 900px)': {
+      position: 'fixed',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
       width: '100vw',
-      height: '100vh',
+      height: '100dvh',
       padding: 0,
       gap: 0,
       borderRadius: 0,
@@ -26,18 +31,6 @@ export const CallOverlayCard = style({
       boxShadow: 'none',
       gridTemplateRows: '1fr',
       background: color.Surface.Container,
-    },
-    'screen and (max-width: 480px)': {
-      padding: 0,
-      gap: 0,
-    },
-    'screen and (max-height: 640px)': {
-      height: '100dvh',
-      padding: 0,
-      gap: 0,
-    },
-    'screen and (orientation: landscape) and (max-height: 520px)': {
-      gridTemplateRows: 'auto 1fr auto',
     },
   },
 });
@@ -49,7 +42,7 @@ export const HeaderRow = style({
   gap: config.space.S300,
   flexWrap: 'wrap',
   '@media': {
-    'screen and (max-width: 720px)': {
+    'screen and (max-width: 900px)': {
       position: 'absolute',
       top: 'env(safe-area-inset-top)',
       left: 0,
@@ -58,7 +51,8 @@ export const HeaderRow = style({
       alignItems: 'center',
       gap: config.space.S200,
       padding: `${config.space.S200} ${config.space.S250}`,
-      background: `linear-gradient(180deg, ${color.Surface.Container} 0%, rgba(0,0,0,0) 100%)`,
+      background: `linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 100%)`,
+      textShadow: `0 ${toRem(2)} ${toRem(6)} rgba(0, 0, 0, 0.5)`,
     },
     'screen and (max-width: 480px)': {
       gap: config.space.S150,
@@ -74,6 +68,22 @@ export const HeaderMeta = style({
   minWidth: 0,
 });
 
+export const HeaderTitle = style({
+  '@media': {
+    'screen and (max-width: 900px)': {
+      color: '#fff',
+    },
+  },
+});
+
+export const HeaderSubtitle = style({
+  '@media': {
+    'screen and (max-width: 900px)': {
+      color: 'rgba(255, 255, 255, 0.8)',
+    },
+  },
+});
+
 export const VideoStage = style({
   position: 'relative',
   overflow: 'hidden',
@@ -82,20 +92,14 @@ export const VideoStage = style({
   border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
   minHeight: 0,
   '@media': {
-    'screen and (max-width: 720px)': {
+    'screen and (max-width: 900px)': {
+      position: 'absolute',
+      inset: 0,
+      zIndex: 0,
       borderRadius: 0,
       border: 'none',
       minHeight: '100%',
       height: '100%',
-    },
-    'screen and (max-width: 480px)': {
-      minHeight: '100%',
-    },
-    'screen and (max-height: 640px)': {
-      minHeight: '100%',
-    },
-    'screen and (orientation: landscape) and (max-height: 520px)': {
-      minHeight: '100%',
     },
   },
 });
@@ -128,22 +132,17 @@ export const LocalPreview = style({
   backgroundColor: color.Surface.Container,
   boxShadow: `0 ${toRem(8)} ${toRem(18)} rgba(0, 0, 0, 0.35)`,
   '@media': {
-    'screen and (max-width: 720px)': {
+    'screen and (max-width: 900px)': {
       right: config.space.S200,
-      bottom: `calc(env(safe-area-inset-bottom) + ${toRem(88)})`,
+      bottom: `calc(env(safe-area-inset-bottom) + ${toRem(96)})`,
       borderRadius: config.radii.R300,
-      width: `clamp(${toRem(96)}, 30vw, ${toRem(170)})`,
-      height: `clamp(${toRem(56)}, 18vw, ${toRem(102)})`,
+      width: `clamp(${toRem(96)}, 30vw, ${toRem(180)})`,
+      height: `clamp(${toRem(56)}, 18vw, ${toRem(110)})`,
     },
     'screen and (max-width: 480px)': {
       right: config.space.S150,
       width: `clamp(${toRem(84)}, 32vw, ${toRem(150)})`,
-      height: `clamp(${toRem(50)}, 20vw, ${toRem(92)})`,
-    },
-    'screen and (orientation: landscape) and (max-height: 520px)': {
-      bottom: `calc(env(safe-area-inset-bottom) + ${toRem(64)})`,
-      width: `clamp(${toRem(90)}, 22vw, ${toRem(150)})`,
-      height: `clamp(${toRem(52)}, 12vw, ${toRem(90)})`,
+      height: `clamp(${toRem(50)}, 20vw, ${toRem(96)})`,
     },
   },
 });
@@ -155,14 +154,14 @@ export const FooterRow = style({
   gap: config.space.S300,
   paddingBottom: 'max(env(safe-area-inset-bottom), 0px)',
   '@media': {
-    'screen and (max-width: 720px)': {
+    'screen and (max-width: 900px)': {
       position: 'absolute',
       left: 0,
       right: 0,
       bottom: 0,
       zIndex: 2,
       padding: `${config.space.S200} ${config.space.S250} calc(max(env(safe-area-inset-bottom), 12px) + ${config.space.S100})`,
-      background: `linear-gradient(0deg, ${color.Surface.Container} 0%, rgba(0,0,0,0) 100%)`,
+      background: `linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 100%)`,
     },
     'screen and (max-width: 480px)': {
       padding: `${config.space.S150} ${config.space.S200} calc(max(env(safe-area-inset-bottom), 10px) + ${config.space.S100})`,
@@ -180,19 +179,17 @@ export const ControlCluster = style({
   border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
   boxShadow: `0 ${toRem(10)} ${toRem(24)} rgba(0, 0, 0, 0.25)`,
   '@media': {
-    'screen and (max-width: 720px)': {
-      width: 'min(320px, 90vw)',
+    'screen and (max-width: 900px)': {
+      width: 'min(340px, 92vw)',
       justifyContent: 'center',
       padding: `${config.space.S200} ${config.space.S300}`,
+      border: 'none',
+      backgroundColor: 'rgba(0, 0, 0, 0.55)',
     },
     'screen and (max-width: 480px)': {
-      width: 'min(280px, 92vw)',
+      width: 'min(290px, 92vw)',
       gap: config.space.S150,
       padding: `${config.space.S150} ${config.space.S250}`,
-    },
-    'screen and (orientation: landscape) and (max-height: 520px)': {
-      width: 'min(340px, 88vw)',
-      padding: `${config.space.S150} ${config.space.S300}`,
     },
   },
 });

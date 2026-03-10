@@ -13,6 +13,7 @@ import { useMatrixClient } from '../hooks/useMatrixClient';
 import { legacyCallAtom } from '../state/legacyCall';
 import { getMemberDisplayName } from '../utils/room';
 import { getMxIdLocalPart } from '../utils/matrix';
+import * as css from './LegacyCallProvider.css';
 
 const getCallStatus = (incoming: boolean, type: CallType, state: CallState): string => {
   if (incoming) {
@@ -119,20 +120,9 @@ function LegacyCallOverlay({
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
       <OverlayCenter>
-        <Box
-          direction="Column"
-          gap="300"
-          style={{
-            width: 'min(960px, 92vw)',
-            height: 'min(560px, 82vh)',
-            padding: 16,
-            background: 'var(--bg-surface)',
-            borderRadius: 16,
-            border: '1px solid var(--bg-surface-border)',
-          }}
-        >
-          <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-            <Box direction="Column" gap="100">
+        <Box className={css.CallOverlayCard}>
+          <Box className={css.HeaderRow}>
+            <Box className={css.HeaderMeta}>
               <Text size="H4" truncate>
                 {title}
               </Text>
@@ -141,31 +131,25 @@ function LegacyCallOverlay({
               </Text>
             </Box>
             {!incoming && (
-              <Button variant="Critical" fill="Solid" onClick={onHangup} before={<Icon src={Icons.PhoneDown} />}>
+              <Button
+                variant="Critical"
+                fill="Solid"
+                radii="Pill"
+                onClick={onHangup}
+                before={<Icon src={Icons.PhoneDown} />}
+              >
                 <Text size="B400">End</Text>
               </Button>
             )}
           </Box>
 
-          <Box
-            grow="Yes"
-            style={{
-              position: 'relative',
-              borderRadius: 12,
-              overflow: 'hidden',
-              background: 'var(--bg-surface-variant)',
-            }}
-          >
+          <Box className={css.VideoStage}>
             {remoteHasVideo ? (
               // eslint-disable-next-line jsx-a11y/media-has-caption
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+              <video ref={remoteVideoRef} autoPlay playsInline className={css.RemoteVideo} />
             ) : (
-              <Box grow="Yes" alignItems="Center" justifyContent="Center">
+              <Box className={css.NoVideo}>
+                <Icon size="500" src={Icons.Mic} />
                 <Text size="T300" priority="300">
                   Audio call
                 </Text>
@@ -177,55 +161,60 @@ function LegacyCallOverlay({
               muted
               autoPlay
               playsInline
-              style={{
-                position: 'absolute',
-                right: 12,
-                bottom: 12,
-                width: 160,
-                height: 96,
-                borderRadius: 10,
-                objectFit: 'cover',
-                background: 'var(--bg-surface)',
-                display: videoMuted ? 'none' : 'block',
-              }}
+              className={css.LocalPreview}
+              style={{ display: videoMuted ? 'none' : 'block' }}
             />
             {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <audio ref={remoteAudioRef} autoPlay />
           </Box>
 
           {incoming ? (
-            <Box alignItems="Center" justifyContent="Center" gap="300">
-              <Button variant="Success" fill="Solid" onClick={onAccept} before={<Icon src={Icons.Phone} />}>
+            <Box className={css.FooterRow}>
+              <Button
+                variant="Success"
+                fill="Solid"
+                radii="Pill"
+                onClick={onAccept}
+                before={<Icon src={Icons.Phone} />}
+              >
                 <Text size="B400">Accept</Text>
               </Button>
-              <Button variant="Critical" fill="Soft" onClick={onReject} before={<Icon src={Icons.PhoneDown} />}>
+              <Button
+                variant="Critical"
+                fill="Soft"
+                radii="Pill"
+                onClick={onReject}
+                before={<Icon src={Icons.PhoneDown} />}
+              >
                 <Text size="B400">Reject</Text>
               </Button>
             </Box>
           ) : (
-            <Box alignItems="Center" justifyContent="Center" gap="200">
-              <IconButton
-                variant={micMuted ? 'Warning' : 'Surface'}
-                fill="Soft"
-                radii="300"
-                size="300"
-                onClick={handleToggleMic}
-              >
-                <Icon size="100" src={micMuted ? Icons.MicMute : Icons.Mic} filled={!micMuted} />
-              </IconButton>
-              <IconButton
-                variant={videoMuted ? 'Surface' : 'Success'}
-                fill="Soft"
-                radii="300"
-                size="300"
-                onClick={handleToggleVideo}
-              >
-                <Icon
-                  size="100"
-                  src={videoMuted ? Icons.VideoCameraMute : Icons.VideoCamera}
-                  filled={!videoMuted}
-                />
-              </IconButton>
+            <Box className={css.FooterRow}>
+              <Box className={css.ControlCluster}>
+                <IconButton
+                  variant={micMuted ? 'Warning' : 'Surface'}
+                  fill="Soft"
+                  radii="Pill"
+                  size="400"
+                  onClick={handleToggleMic}
+                >
+                  <Icon size="100" src={micMuted ? Icons.MicMute : Icons.Mic} filled={!micMuted} />
+                </IconButton>
+                <IconButton
+                  variant={videoMuted ? 'Surface' : 'Success'}
+                  fill="Soft"
+                  radii="Pill"
+                  size="400"
+                  onClick={handleToggleVideo}
+                >
+                  <Icon
+                    size="100"
+                    src={videoMuted ? Icons.VideoCameraMute : Icons.VideoCamera}
+                    filled={!videoMuted}
+                  />
+                </IconButton>
+              </Box>
             </Box>
           )}
         </Box>

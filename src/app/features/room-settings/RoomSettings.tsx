@@ -17,6 +17,8 @@ import { Permissions } from './permissions';
 import { RoomSettingsPage } from '../../state/roomSettings';
 import { useRoom } from '../../hooks/useRoom';
 import { DeveloperTools } from '../common-settings/developer-tools';
+import { UserBadges } from '../../components/UserBadges';
+import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;
@@ -69,6 +71,9 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
   const roomAvatar = useRoomAvatar(room, mDirects.has(room.roomId));
   const roomName = useRoomName(room);
   const joinRuleContent = useRoomJoinRule(room);
+  const directUserId = mDirects.has(room.roomId)
+    ? getDirectRoomTargetUserId(room, mx.getSafeUserId())
+    : undefined;
 
   const avatarUrl = roomAvatar
     ? mxcUrlToHttp(mx, roomAvatar, useAuthentication, 96, 96, 'crop') ?? undefined
@@ -111,9 +116,12 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
                     )}
                   />
                 </Avatar>
-                <Text size="H4" truncate>
-                  {roomName}
-                </Text>
+                <Box alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+                  <Text size="H4" truncate>
+                    {roomName}
+                  </Text>
+                  <UserBadges userId={directUserId} size="200" />
+                </Box>
               </Box>
               <Box shrink="No">
                 {screenSize === ScreenSize.Mobile && (

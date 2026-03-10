@@ -9,6 +9,7 @@ import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { useRoom } from '../../hooks/useRoom';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { UserAvatar } from '../../components/user-avatar';
+import { UserBadges } from '../../components/UserBadges';
 import { getMouseEventCords } from '../../utils/dom';
 import * as css from './styles.css';
 
@@ -67,9 +68,12 @@ export function CallMemberCard({ member }: CallMemberCardProps) {
           />
         </Avatar>
         <Box grow="Yes">
-          <Text size="L400" truncate>
-            {name}
-          </Text>
+          <Box alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+            <Text size="L400" truncate>
+              {name}
+            </Text>
+            <UserBadges userId={userId} size="200" />
+          </Box>
         </Box>
         {audioOnly && <Icon src={Icons.VideoCameraMute} size="100" />}
       </Box>

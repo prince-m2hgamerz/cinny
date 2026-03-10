@@ -68,7 +68,7 @@ import {
   ISidebarFolder,
   SidebarItems,
   TSidebarItem,
-  makeCinnySpacesContent,
+  makeVChatSpacesContent,
   parseSidebar,
   sidebarItemWithout,
   useSidebarItems,
@@ -744,9 +744,9 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
           newItems.push(i);
         });
 
-        const newSpacesContent = makeCinnySpacesContent(mx, newItems);
+        const newSpacesContent = makeVChatSpacesContent(mx, newItems);
         localEchoSidebarItem(parseSidebar(mx, orphanSpaces, newSpacesContent));
-        mx.setAccountData(AccountDataEvent.CinnySpaces, newSpacesContent);
+        mx.setAccountData(AccountDataEvent.VChatSpaces, newSpacesContent);
       },
       [mx, sidebarItems, setOpenedFolder, localEchoSidebarItem, orphanSpaces]
     )
@@ -790,9 +790,9 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
       if (orphanSpaces.includes(roomId)) return;
       const newItems = sidebarItemWithout(sidebarItems, roomId);
 
-      const newSpacesContent = makeCinnySpacesContent(mx, newItems);
+      const newSpacesContent = makeVChatSpacesContent(mx, newItems);
       localEchoSidebarItem(parseSidebar(mx, orphanSpaces, newSpacesContent));
-      mx.setAccountData(AccountDataEvent.CinnySpaces, newSpacesContent);
+      mx.setAccountData(AccountDataEvent.VChatSpaces, newSpacesContent);
     },
     [mx, sidebarItems, orphanSpaces, localEchoSidebarItem]
   );

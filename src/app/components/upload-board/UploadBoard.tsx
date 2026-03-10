@@ -1,4 +1,11 @@
-import React, { MutableRefObject, ReactNode, useImperativeHandle, useRef } from 'react';
+import React, {
+  MutableRefObject,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 import { Badge, Box, Chip, Header, Icon, Icons, Spinner, Text, as, percent } from 'folds';
 import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
@@ -44,6 +51,7 @@ export function UploadBoardHeader({
   imperativeHandlerRef,
 }: UploadBoardHeaderProps) {
   const sendingRef = useRef(false);
+  const sendRequestedRef = useRef(false);
   const uploads = useAtomValue(uploadFamilyObserverAtom);
 
   const isSuccess = uploads.every((upload) => upload.status === UploadStatus.Success);
@@ -62,19 +70,63 @@ export function UploadBoardHeader({
     { loaded: 0, total: 0 }
   );
 
-  const handleSend = async () => {
-    if (sendingRef.current) return;
-    sendingRef.current = true;
-    await onSend(
-      uploads.filter((upload) => upload.status === UploadStatus.Success) as UploadSuccess[]
-    );
-    sendingRef.current = false;
-  };
+  const flushSend = useCallback(
+    async (currentUploads: Upload[]) => {
+      if (sendingRef.current) return;
+
+      const successfulUploads = currentUploads.filter(
+        (upload) => upload.status === UploadStatus.Success
+      ) as UploadSuccess[];
+
+      if (successfulUploads.length === 0) {
+        sendRequestedRef.current = false;
+        return;
+      }
+
+      sendRequestedRef.current = false;
+      sendingRef.current = true;
+      try {
+        await onSend(successfulUploads);
+      } finally {
+        sendingRef.current = false;
+      }
+    },
+    [onSend]
+  );
+
+  const handleSend = useCallback(async () => {
+    if (sendingRef.current || sendRequestedRef.current) return;
+
+    if (uploads.length === 0) {
+      sendRequestedRef.current = false;
+      return;
+    }
+
+    sendRequestedRef.current = true;
+
+    if (!uploads.every((upload) => upload.status === UploadStatus.Success)) return;
+
+    await flushSend(uploads);
+  }, [uploads, flushSend]);
+
+  useEffect(() => {
+    if (!sendRequestedRef.current) return;
+    if (uploads.length === 0) {
+      sendRequestedRef.current = false;
+      return;
+    }
+    if (!uploads.every((upload) => upload.status === UploadStatus.Success)) return;
+
+    flushSend(uploads).catch(() => undefined);
+  }, [uploads, flushSend]);
 
   useImperativeHandle(imperativeHandlerRef, () => ({
     handleSend,
   }));
-  const handleCancel = () => onCancel(uploads);
+  const handleCancel = () => {
+    sendRequestedRef.current = false;
+    onCancel(uploads);
+  };
 
   return (
     <Header size="400">

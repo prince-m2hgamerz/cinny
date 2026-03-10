@@ -17,6 +17,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { InviteUserPrompt } from '../invite-user-prompt';
+import { UserBadges } from '../UserBadges';
 
 export type RoomIntroProps = {
   room: Room;
@@ -72,6 +73,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             <Text size="T200" priority="300">
               {'Created by '}
               <b>@{creatorName}</b>
+              <UserBadges userId={creatorId} size="100" withGap />
               {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts, hour24Clock)}`}
             </Text>
           )}

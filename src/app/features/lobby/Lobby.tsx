@@ -43,7 +43,7 @@ import { ASCIILexicalTable, orderKeys } from '../../utils/ASCIILexicalTable';
 import { getStateEvent } from '../../utils/room';
 import { useClosedLobbyCategoriesAtom } from '../../state/hooks/closedLobbyCategories';
 import {
-  makeCinnySpacesContent,
+  makeVChatSpacesContent,
   sidebarItemWithout,
   useSidebarItems,
 } from '../../hooks/useSidebarItems';
@@ -421,8 +421,8 @@ export function Lobby() {
       if (!sidebarSpaces.has(rId)) {
         newItems.push(rId);
       }
-      const newSpacesContent = makeCinnySpacesContent(mx, newItems);
-      mx.setAccountData(AccountDataEvent.CinnySpaces as any, newSpacesContent as any);
+      const newSpacesContent = makeVChatSpacesContent(mx, newItems);
+      mx.setAccountData(AccountDataEvent.VChatSpaces as any, newSpacesContent as any);
     },
     [mx, sidebarItems, sidebarSpaces]
   );

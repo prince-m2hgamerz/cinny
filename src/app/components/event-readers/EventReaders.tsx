@@ -24,6 +24,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { getMouseEventCords } from '../../utils/dom';
+import { UserBadges } from '../UserBadges';
 
 export type EventReadersProps = {
   room: Room;
@@ -99,9 +100,12 @@ export const EventReaders = as<'div', EventReadersProps>(
                       </Avatar>
                     }
                   >
-                    <Text size="T400" truncate>
-                      {name}
-                    </Text>
+                    <Box grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+                      <Text size="T400" truncate>
+                        {name}
+                      </Text>
+                      <UserBadges userId={readerId} size="200" />
+                    </Box>
                   </MenuItem>
                 );
               })}

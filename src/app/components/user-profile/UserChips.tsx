@@ -41,6 +41,8 @@ import { useTimeoutToggle } from '../../hooks/useTimeoutToggle';
 import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
+import { UserBadges } from '../UserBadges';
+import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
 
 export function ServerChip({ server }: { server: string }) {
   const mx = useMatrixClient();
@@ -288,6 +290,7 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
   const renderItem = (room: Room) => {
     const { roomId } = room;
     const dm = directs.includes(roomId);
+    const dmUserId = dm ? getDirectRoomTargetUserId(room, mx.getSafeUserId()) : undefined;
 
     return (
       <MenuItem
@@ -328,9 +331,12 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
           </Avatar>
         }
       >
-        <Text size="B300" truncate>
-          {room.name}
-        </Text>
+        <Box grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+          <Text size="B300" truncate>
+            {room.name}
+          </Text>
+          <UserBadges userId={dmUserId} size="200" />
+        </Box>
       </MenuItem>
     );
   };

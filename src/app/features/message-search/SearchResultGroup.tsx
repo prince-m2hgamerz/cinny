@@ -36,6 +36,7 @@ import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '../.
 import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '../../components/sequence-card';
 import { UserAvatar } from '../../components/user-avatar';
+import { UserBadges } from '../../components/UserBadges';
 import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
@@ -288,6 +289,7 @@ export function SearchResultGroup({
                           <UsernameBold>{displayName}</UsernameBold>
                         </Text>
                       </Username>
+                      <UserBadges userId={event.sender} size="200" />
                       {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
                     </Box>
                     <Time

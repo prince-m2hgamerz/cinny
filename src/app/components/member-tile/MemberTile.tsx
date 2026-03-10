@@ -4,6 +4,7 @@ import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { UserAvatar } from '../user-avatar';
+import { UserBadges } from '../UserBadges';
 import * as css from './style.css';
 
 const getName = (room: Room, member: RoomMember) =>
@@ -37,9 +38,12 @@ export const MemberTile = as<'button', MemberTileProps>(
           />
         </Avatar>
         <Box grow="Yes" as="span" direction="Column">
-          <Text as="span" size="T300" truncate>
-            <b>{name}</b>
-          </Text>
+          <Box as="span" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+            <Text as="span" size="T300" truncate>
+              <b>{name}</b>
+            </Text>
+            <UserBadges userId={member.userId} size="200" />
+          </Box>
           <Box alignItems="Center" justifyContent="SpaceBetween" gap="100">
             <Text as="span" size="T200" priority="300" truncate>
               {username}

@@ -59,6 +59,8 @@ import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
+import { UserBadges } from '../../components/UserBadges';
+import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -263,6 +265,7 @@ export function RoomNavItem({
   );
 
   const roomName = useRoomName(room);
+  const directUserId = direct ? getDirectRoomTargetUserId(room, mx.getSafeUserId()) : undefined;
 
   const handleContextMenu: MouseEventHandler<HTMLElement> = (evt) => {
     evt.preventDefault();
@@ -345,10 +348,11 @@ export function RoomNavItem({
                 />
               )}
             </Avatar>
-            <Box as="span" grow="Yes">
+            <Box as="span" grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
               <Text priority={unread ? '500' : '300'} as="span" size="Inherit" truncate>
                 {roomName}
               </Text>
+              <UserBadges userId={directUserId} size="200" />
             </Box>
             {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
               <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>

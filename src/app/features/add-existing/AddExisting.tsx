@@ -54,6 +54,8 @@ import { StateEvent } from '../../../types/matrix/room';
 import { getViaServers } from '../../plugins/via-servers';
 import { rateLimitedActions } from '../../utils/matrix';
 import { useAlive } from '../../hooks/useAlive';
+import { UserBadges } from '../../components/UserBadges';
+import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
 
 const SEARCH_OPTS: UseAsyncSearchOptions = {
   limit: 500,
@@ -257,6 +259,9 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
                         if (!room) return null;
                         const selectedItem = selected?.includes(roomId);
                         const dm = mDirects.has(room.roomId);
+                        const dmUserId = dm
+                          ? getDirectRoomTargetUserId(room, mx.getSafeUserId())
+                          : undefined;
 
                         return (
                           <VirtualTile
@@ -301,12 +306,13 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
                               }
                               after={selectedItem && <Icon size="200" src={Icons.Check} />}
                             >
-                              <Box grow="Yes">
+                              <Box grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
                                 <Text truncate size="T400">
                                   {queryHighlighRegex
                                     ? highlightText(queryHighlighRegex, [room.name])
                                     : room.name}
                                 </Text>
+                                <UserBadges userId={dmUserId} size="200" />
                               </Box>
                             </MenuItem>
                           </VirtualTile>

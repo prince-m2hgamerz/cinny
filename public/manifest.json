@@ -1,6 +1,6 @@
 {
-  "name": "Cinny",
-  "short_name": "Cinny",
+  "name": "VChat",
+  "short_name": "VChat",
   "description": "Yet another matrix client",
   "dir": "auto",
   "lang": "en-US",

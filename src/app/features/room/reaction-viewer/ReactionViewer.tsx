@@ -28,6 +28,7 @@ import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../../hooks/useSpace';
 import { getMouseEventCords } from '../../../utils/dom';
+import { UserBadges } from '../../../components/UserBadges';
 
 export type ReactionViewerProps = {
   room: Room;
@@ -152,11 +153,14 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                         </Avatar>
                       }
                     >
-                      <Box grow="Yes">
-                        <Text size="T400" truncate>
-                          {name}
-                        </Text>
-                      </Box>
+                        <Box grow="Yes">
+                          <Box alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+                            <Text size="T400" truncate>
+                              {name}
+                            </Text>
+                            <UserBadges userId={senderId} size="200" />
+                          </Box>
+                        </Box>
                     </MenuItem>
                   );
                 })}

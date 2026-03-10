@@ -1,6 +1,6 @@
 import React from 'react';
 import { Room } from 'matrix-js-sdk';
-import { Chip, Text } from 'folds';
+import { Box, Chip, Text } from 'folds';
 import { useAtomValue } from 'jotai';
 import { useRoomName } from '../../hooks/useRoomMeta';
 import { RoomIcon } from '../../components/room-avatar';
@@ -12,10 +12,13 @@ import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
 import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { UserBadges } from '../../components/UserBadges';
+import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
 
 type CallRoomNameProps = {
   room: Room;
 };
+
 export function CallRoomName({ room }: CallRoomNameProps) {
   const mx = useMatrixClient();
   const name = useRoomName(room);
@@ -30,6 +33,7 @@ export function CallRoomName({ room }: CallRoomNameProps) {
   const allParents = getAllParents(roomToParents, room.roomId);
   const orphanParents = allParents && orphanSpaces.filter((o) => allParents.has(o));
   const perfectOrphanParent = orphanParents && guessPerfectParent(mx, room.roomId, orphanParents);
+  const directUserId = dm ? getDirectRoomTargetUserId(room, mx.getSafeUserId()) : undefined;
 
   const { navigateRoom } = useRoomNavigate();
 
@@ -42,14 +46,17 @@ export function CallRoomName({ room }: CallRoomNameProps) {
       }
       onClick={() => navigateRoom(room.roomId)}
     >
-      <Text size="L400" truncate>
-        {name}
+      <Box alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+        <Text size="L400" truncate>
+          {name}
+        </Text>
+        <UserBadges userId={directUserId} size="100" />
         {!dm && perfectOrphanParent && (
-          <Text as="span" size="T200" priority="300">
-            {' •'} <b>{getRoom(perfectOrphanParent)?.name ?? perfectOrphanParent}</b>
+          <Text as="span" size="T200" priority="300" truncate>
+            {' - '}<b>{getRoom(perfectOrphanParent)?.name ?? perfectOrphanParent}</b>
           </Text>
         )}
-      </Text>
+      </Box>
     </Chip>
   );
 }

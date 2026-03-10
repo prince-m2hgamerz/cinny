@@ -68,6 +68,8 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { UserBadges } from '../../components/UserBadges';
+import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
 
 type RoomMenuProps = {
   room: Room;
@@ -270,6 +272,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const avatarMxc = useRoomAvatar(room, direct);
   const name = useRoomName(room);
   const topic = useRoomTopic(room);
+  const directUserId = direct ? getDirectRoomTargetUserId(room, mx.getSafeUserId()) : undefined;
   const avatarUrl = avatarMxc
     ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined
     : undefined;
@@ -335,9 +338,12 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
             </Avatar>
           )}
           <Box direction="Column">
-            <Text size={topic ? 'H5' : 'H3'} truncate>
-              {name}
-            </Text>
+            <Box alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+              <Text size={topic ? 'H5' : 'H3'} truncate>
+                {name}
+              </Text>
+              <UserBadges userId={directUserId} size="300" />
+            </Box>
             {topic && (
               <UseStateProvider initial={false}>
                 {(viewTopic, setViewTopic) => (

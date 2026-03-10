@@ -53,9 +53,7 @@ import {
   getMemberDisplayName,
 } from '../../../utils/room';
 import {
-  getCanonicalAliasOrRoomId,
   getMxIdLocalPart,
-  isRoomAlias,
   mxcUrlToHttp,
 } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
@@ -69,6 +67,7 @@ import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
+import { UserBadges } from '../../../components/UserBadges';
 import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
@@ -324,8 +323,6 @@ export const MessageCopyLinkItem = as<
     onClose?: () => void;
   }
 >(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
-
   const handleCopy = () => {
     const eventId = mEvent.getId();
     if (!eventId) return;
@@ -765,6 +762,7 @@ export const Message = as<'div', MessageProps>(
               <UsernameBold>{senderDisplayName}</UsernameBold>
             </Text>
           </Username>
+          <UserBadges userId={senderId} size="200" />
           {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
         </Box>
         <Box shrink="No" gap="100">

@@ -21,6 +21,7 @@ import { UserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '../../utils/keyboard';
+import { UserBadges } from '../UserBadges';
 
 type UserHeroProps = {
   userId: string;
@@ -109,6 +110,7 @@ export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
         >
           {displayName ?? username ?? userId}
         </Text>
+        <UserBadges userId={userId} size="300" />
       </Box>
       <Box alignItems="Center" gap="100" wrap="Wrap">
         <Text size="T200" className={classNames(BreakWord, LineClamp3)} title={username}>

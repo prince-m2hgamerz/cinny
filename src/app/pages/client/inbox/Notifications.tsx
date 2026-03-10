@@ -77,6 +77,7 @@ import { markAsRead } from '../../../utils/notifications';
 import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { VirtualTile } from '../../../components/virtualizer';
 import { UserAvatar } from '../../../components/user-avatar';
+import { UserBadges } from '../../../components/UserBadges';
 import { EncryptedContent } from '../../../features/room/message';
 import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
@@ -509,6 +510,7 @@ function RoomNotificationsGroupComp({
                           <UsernameBold>{displayName}</UsernameBold>
                         </Text>
                       </Username>
+                      <UserBadges userId={event.sender} size="200" />
                       {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
                     </Box>
                     <Time

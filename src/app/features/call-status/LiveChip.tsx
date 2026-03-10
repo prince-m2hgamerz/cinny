@@ -27,6 +27,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { UserAvatar } from '../../components/user-avatar';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { getMouseEventCords } from '../../utils/dom';
+import { UserBadges } from '../../components/UserBadges';
 
 type LiveChipProps = {
   room: Room;
@@ -96,7 +97,7 @@ export function LiveChip({ count, room, members }: LiveChipProps) {
                             'Right'
                           )
                         }
-                        before={
+                      before={
                           <Avatar size="200" radii="400">
                             <UserAvatar
                               userId={userId}
@@ -107,9 +108,12 @@ export function LiveChip({ count, room, members }: LiveChipProps) {
                           </Avatar>
                         }
                       >
-                        <Text size="T300" truncate>
-                          {name}
-                        </Text>
+                        <Box grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+                          <Text size="T300" truncate>
+                            {name}
+                          </Text>
+                          <UserBadges userId={userId} size="200" />
+                        </Box>
                       </MenuItem>
                     );
                   })}

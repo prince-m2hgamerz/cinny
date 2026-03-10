@@ -23,6 +23,7 @@ import { useRoomLatestRenderedEvent } from '../../hooks/useRoomLatestRenderedEve
 import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
 import { EventReaders } from '../../components/event-readers';
 import { stopPropagation } from '../../utils/keyboard';
+import { UserBadges } from '../../components/UserBadges';
 
 export function RoomViewFollowingPlaceholder() {
   return <div className={css.RoomViewFollowingPlaceholder} />;
@@ -37,13 +38,25 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
     const [open, setOpen] = useState(false);
     const latestEvent = useRoomLatestRenderedEvent(room);
     const latestEventReaders = useRoomEventReaders(room, latestEvent?.getId());
-    const names = latestEventReaders
+    const readerEntries = latestEventReaders
       .filter((readerId) => readerId !== mx.getUserId())
-      .map(
-        (readerId) => getMemberDisplayName(room, readerId) ?? getMxIdLocalPart(readerId) ?? readerId
-      );
+      .map((readerId) => ({
+        userId: readerId,
+        name: getMemberDisplayName(room, readerId) ?? getMxIdLocalPart(readerId) ?? readerId,
+      }));
 
     const eventId = latestEvent?.getId();
+    const renderName = (index: number) => {
+      const entry = readerEntries[index];
+      if (!entry) return null;
+
+      return (
+        <>
+          <b>{entry.name}</b>
+          <UserBadges userId={entry.userId} size="100" withGap />
+        </>
+      );
+    };
 
     return (
       <>
@@ -66,70 +79,73 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
           </Overlay>
         )}
         <Box
-          as={names.length > 0 ? 'button' : 'div'}
-          onClick={names.length > 0 ? () => setOpen(true) : undefined}
-          className={classNames(css.RoomViewFollowing({ clickable: names.length > 0 }), className)}
+          as={readerEntries.length > 0 ? 'button' : 'div'}
+          onClick={readerEntries.length > 0 ? () => setOpen(true) : undefined}
+          className={classNames(
+            css.RoomViewFollowing({ clickable: readerEntries.length > 0 }),
+            className
+          )}
           alignItems="Center"
           justifyContent="End"
           gap="200"
           {...props}
           ref={ref}
         >
-          {names.length > 0 && (
+          {readerEntries.length > 0 && (
             <>
               <Icon style={{ opacity: config.opacity.P300 }} size="100" src={Icons.CheckTwice} />
               <Text size="T300" truncate>
-                {names.length === 1 && (
+                {readerEntries.length === 1 && (
                   <>
-                    <b>{names[0]}</b>
+                    {renderName(0)}
                     <Text as="span" size="Inherit" priority="300">
                       {' is following the conversation.'}
                     </Text>
                   </>
                 )}
-                {names.length === 2 && (
+                {readerEntries.length === 2 && (
                   <>
-                    <b>{names[0]}</b>
+                    {renderName(0)}
                     <Text as="span" size="Inherit" priority="300">
                       {' and '}
                     </Text>
-                    <b>{names[1]}</b>
+                    {renderName(1)}
                     <Text as="span" size="Inherit" priority="300">
                       {' are following the conversation.'}
                     </Text>
                   </>
                 )}
-                {names.length === 3 && (
+                {readerEntries.length === 3 && (
                   <>
-                    <b>{names[0]}</b>
+                    {renderName(0)}
                     <Text as="span" size="Inherit" priority="300">
                       {', '}
                     </Text>
-                    <b>{names[1]}</b>
+                    {renderName(1)}
                     <Text as="span" size="Inherit" priority="300">
                       {' and '}
                     </Text>
-                    <b>{names[2]}</b>
+                    {renderName(2)}
                     <Text as="span" size="Inherit" priority="300">
                       {' are following the conversation.'}
                     </Text>
                   </>
                 )}
-                {names.length > 3 && (
+                {readerEntries.length > 3 && (
                   <>
-                    <b>{names[0]}</b>
+                    {renderName(0)}
                     <Text as="span" size="Inherit" priority="300">
                       {', '}
                     </Text>
-                    <b>{names[1]}</b>
+                    {renderName(1)}
                     <Text as="span" size="Inherit" priority="300">
                       {', '}
                     </Text>
-                    <b>{names[2]}</b>
+                    {renderName(2)}
                     <Text as="span" size="Inherit" priority="300">
                       {' and '}
                     </Text>
-                    <b>{names.length - 3} others</b>
+                    <b>{readerEntries.length - 3} others</b>
                     <Text as="span" size="Inherit" priority="300">
                       {' are following the conversation.'}
                     </Text>

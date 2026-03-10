@@ -12,6 +12,7 @@ import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import colorMXID from '../../../util/colorMXID';
 import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
+import { UserBadges } from '../UserBadges';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -110,9 +111,12 @@ export const Reply = as<'div', ReplyProps>(
           userColor={usernameColor}
           username={
             sender && (
-              <Text size="T300" truncate>
-                <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
-              </Text>
+              <Box as="span" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+                <Text size="T300" truncate>
+                  <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
+                </Text>
+                <UserBadges userId={sender} size="100" />
+              </Box>
             )
           }
           data-event-id={replyEventId}

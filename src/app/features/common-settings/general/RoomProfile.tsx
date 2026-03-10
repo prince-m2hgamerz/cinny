@@ -40,6 +40,8 @@ import { useFilePicker } from '../../../hooks/useFilePicker';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAlive } from '../../../hooks/useAlive';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { UserBadges } from '../../../components/UserBadges';
+import { getDirectRoomTargetUserId } from '../../../utils/verifiedUser';
 
 type RoomProfileEditProps = {
   canEditAvatar: boolean;
@@ -273,6 +275,9 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
   const name = useRoomName(room);
   const topic = useRoomTopic(room);
   const joinRule = useRoomJoinRule(room);
+  const directUserId = directs.has(room.roomId)
+    ? getDirectRoomTargetUserId(room, mx.getSafeUserId())
+    : undefined;
 
   const canEditAvatar = permissions.stateEvent(StateEvent.RoomAvatar, mx.getSafeUserId());
   const canEditName = permissions.stateEvent(StateEvent.RoomName, mx.getSafeUserId());
@@ -310,9 +315,12 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
           <Box gap="400">
             <Box grow="Yes" direction="Column" gap="300">
               <Box direction="Column" gap="100">
-                <Text className={BreakWord} size="H5">
-                  {name ?? 'Unknown'}
-                </Text>
+                <Box alignItems="Center" gap="100" wrap="Wrap">
+                  <Text className={BreakWord} size="H5">
+                    {name ?? 'Unknown'}
+                  </Text>
+                  <UserBadges userId={directUserId} size="200" />
+                </Box>
                 {topic && (
                   <Text className={classNames(BreakWord, LineClamp3)} size="T200">
                     <Linkify options={LINKIFY_OPTS}>{topic}</Linkify>

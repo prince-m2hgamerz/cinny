@@ -38,6 +38,8 @@ import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 import { ItemDraggableTarget, useDraggableItem } from './DnD';
 import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { UserBadges } from '../../components/UserBadges';
+import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
 
 type RoomJoinButtonProps = {
   roomId: string;
@@ -177,6 +179,7 @@ type RoomProfileProps = {
   roomId: string;
   roomType?: string;
   name: string;
+  badges?: ReactNode;
   topic?: string;
   avatarUrl?: string;
   suggested?: boolean;
@@ -188,6 +191,7 @@ function RoomProfile({
   roomId,
   roomType,
   name,
+  badges,
   topic,
   avatarUrl,
   suggested,
@@ -207,9 +211,12 @@ function RoomProfile({
       </Avatar>
       <Box grow="Yes" direction="Column">
         <Box gap="200" alignItems="Center">
-          <Text size="H5" truncate>
-            {name}
-          </Text>
+          <Box alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+            <Text size="H5" truncate>
+              {name}
+            </Text>
+            {badges}
+          </Box>
           {suggested && (
             <Box shrink="No" alignItems="Center">
               <Badge variant="Success" fill="Soft" radii="Pill" outlined>
@@ -318,6 +325,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
     const targetRef = useRef<HTMLDivElement>(null);
     const targetHandleRef = useRef<HTMLDivElement>(null);
     useDraggableItem(item, targetRef, onDragging, targetHandleRef);
+    const dmUserId = dm && room ? getDirectRoomTargetUserId(room, mx.getSafeUserId()) : undefined;
 
     const joined = room?.getMyMembership() === Membership.Join;
 
@@ -340,6 +348,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                   roomId={roomId}
                   roomType={localSummary.roomType}
                   name={localSummary.name}
+                  badges={<UserBadges userId={dmUserId} size="200" />}
                   topic={localSummary.topic}
                   avatarUrl={
                     dm

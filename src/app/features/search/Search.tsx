@@ -59,6 +59,7 @@ import { useKeyDown } from '../../hooks/useKeyDown';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { KeySymbol } from '../../utils/key-symbol';
 import { isMacOS } from '../../utils/user-agent';
+import { UserBadges } from '../../components/UserBadges';
 
 enum SearchRoomType {
   Rooms = '#',
@@ -385,6 +386,7 @@ export function Search({ requestClose }: SearchProps) {
                                 ? highlightText(queryHighlighRegex, [room.name])
                                 : room.name}
                             </Text>
+                            <UserBadges userId={dmUserId} size="200" />
                             {dmUsername && (
                               <Text as="span" size="T200" priority="300" truncate>
                                 @

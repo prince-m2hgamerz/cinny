@@ -1,6 +1,6 @@
 import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect } from 'react';
 import { Editor } from 'slate';
-import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
+import { Avatar, Box, Icon, Icons, MenuItem, Text } from 'folds';
 import { JoinRule, MatrixClient } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 
@@ -18,6 +18,8 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
 import { RoomAvatar, RoomIcon } from '../../room-avatar';
 import { getViaServers } from '../../../plugins/via-servers';
+import { UserBadges } from '../../UserBadges';
+import { getDirectRoomTargetUserId } from '../../../utils/verifiedUser';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
@@ -141,6 +143,7 @@ export function RoomMentionAutocomplete({
           const room = mx.getRoom(rId);
           if (!room) return null;
           const dm = mDirects.has(room.roomId);
+          const dmUserId = dm ? getDirectRoomTargetUserId(room, mx.getSafeUserId()) : undefined;
 
           const handleSelect = () => handleAutocomplete(room.getCanonicalAlias() ?? rId, room.name);
 
@@ -180,9 +183,12 @@ export function RoomMentionAutocomplete({
                 </Avatar>
               }
             >
-              <Text style={{ flexGrow: 1 }} size="B400" truncate>
-                {room.name}
-              </Text>
+              <Box grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+                <Text style={{ flexGrow: 1 }} size="B400" truncate>
+                  {room.name}
+                </Text>
+                <UserBadges userId={dmUserId} size="200" />
+              </Box>
             </MenuItem>
           );
         })

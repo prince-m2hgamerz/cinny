@@ -67,6 +67,7 @@ import { useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
 import { useReportRoomSupported } from '../../../hooks/useReportRoomSupported';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { UserBadges } from '../../../components/UserBadges';
 
 const COMPACT_CARD_WIDTH = 548;
 
@@ -309,10 +310,11 @@ function InviteCard({
       </Box>
       <Box direction="Column">
         <Box gap="200" alignItems="Baseline">
-          <Box grow="Yes">
+          <Box grow="Yes" alignItems="Center" gap="100" wrap="Wrap">
             <Text size="T200" priority="300">
               From: <b>{invite.senderId}</b>
             </Text>
+            <UserBadges userId={invite.senderId} size="100" />
           </Box>
           {typeof invite.inviteTs === 'number' && invite.inviteTs !== 0 && (
             <Box shrink="No">

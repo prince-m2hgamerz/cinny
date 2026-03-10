@@ -86,6 +86,7 @@ import {
   useGetMemberPowerTag,
 } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
+import { UserBadges } from '../../../components/UserBadges';
 
 type PinnedMessageProps = {
   room: Room;
@@ -217,6 +218,7 @@ function PinnedMessage({
                 <UsernameBold>{displayName}</UsernameBold>
               </Text>
             </Username>
+            <UserBadges userId={sender} size="200" />
             {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
           </Box>
           <Time

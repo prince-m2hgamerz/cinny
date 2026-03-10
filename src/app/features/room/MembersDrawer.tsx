@@ -59,6 +59,7 @@ import { useSpaceOptionally } from '../../hooks/useSpace';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { UserBadges } from '../../components/UserBadges';
 
 type MemberDrawerHeaderProps = {
   room: Room;
@@ -153,9 +154,12 @@ function MemberItem({
       }
     >
       <Box grow="Yes">
-        <Text size="T400" truncate>
-          {name}
-        </Text>
+        <Box alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+          <Text size="T400" truncate>
+            {name}
+          </Text>
+          <UserBadges userId={member.userId} size="200" />
+        </Box>
       </Box>
     </MenuItem>
   );

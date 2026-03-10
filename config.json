@@ -1,27 +1,17 @@
 {
   "defaultHomeserver": 1,
-  "homeserverList": ["converser.eu", "matrix.org", "mozilla.org", "unredacted.org", "xmr.se"],
+  "homeserverList": ["vgram.m2hio.in"],
   "allowCustomHomeservers": true,
 
   "featuredCommunities": {
     "openAsDefault": false,
     "spaces": [
-      "#cinny-space:matrix.org",
-      "#community:matrix.org",
-      "#space:unredacted.org",
-      "#science-space:matrix.org",
-      "#libregaming-games:tchncs.de",
-      "#mathematics-on:matrix.org"
+      "#vchat:vgram.m2hio.in"
     ],
     "rooms": [
-      "#cinny:matrix.org",
-      "#freesoftware:matrix.org",
-      "#pcapdroid:matrix.org",
-      "#gentoo:matrix.org",
-      "#PrivSec.dev:arcticfoxes.net",
-      "#disroot:aria-net.org"
+      "#vchat:vgram.m2hio.in"
     ],
-    "servers": ["matrix.org", "mozilla.org", "unredacted.org"]
+    "servers": ["vgram.m2hio.in"]
   },
 
   "hashRouter": {

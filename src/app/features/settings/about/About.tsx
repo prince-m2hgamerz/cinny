@@ -11,6 +11,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 type AboutProps = {
   requestClose: () => void;
 };
+
 export function About({ requestClose }: AboutProps) {
   const mx = useMatrixClient();
 
@@ -45,7 +46,7 @@ export function About({ requestClose }: AboutProps) {
                 <Box direction="Column" gap="300">
                   <Box direction="Column" gap="100">
                     <Box gap="100" alignItems="End">
-                      <Text size="H3">Cinny</Text>
+                      <Text size="H3">VChat</Text>
                       <Text size="T200">v4.10.5</Text>
                     </Box>
                     <Text>Yet another matrix client.</Text>
@@ -54,7 +55,7 @@ export function About({ requestClose }: AboutProps) {
                   <Box gap="200" wrap="Wrap">
                     <Button
                       as="a"
-                      href="https://github.com/cinnyapp/cinny"
+                      href="https://github.com/"
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Secondary"
@@ -67,7 +68,7 @@ export function About({ requestClose }: AboutProps) {
                     </Button>
                     <Button
                       as="a"
-                      href="https://cinny.in/#sponsor"
+                      href="https://VChat.m2hio.in/#sponsor"
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Critical"
@@ -115,123 +116,154 @@ export function About({ requestClose }: AboutProps) {
                   direction="Column"
                   gap="400"
                 >
-                  <Box
-                    as="ul"
-                    direction="Column"
-                    gap="200"
-                    style={{
-                      margin: 0,
-                      paddingLeft: config.space.S400,
-                    }}
-                  >
-                    <li>
+                  <Box direction="Column" gap="300">
+                    <Text size="T300">
+                      This application is developed and maintained by M2H Web Solution.
+                    </Text>
+                    <Box direction="Column" gap="100">
+                      <Text size="T300">Lead Developer:</Text>
+                      <Text size="T300">Prince Kumar - M2H Web Solution</Text>
                       <Text size="T300">
-                        The{' '}
+                        Website:{' '}
                         <a
-                          href="https://github.com/matrix-org/matrix-js-sdk"
+                          href="https://vchat.m2hio.in"
                           rel="noreferrer noopener"
                           target="_blank"
                         >
-                          matrix-js-sdk
-                        </a>{' '}
-                        is ©{' '}
-                        <a
-                          href="https://matrix.org/foundation"
-                          rel="noreferrer noopener"
-                          target="_blank"
-                        >
-                          The Matrix.org Foundation C.I.C
-                        </a>{' '}
-                        used under the terms of{' '}
-                        <a
-                          href="http://www.apache.org/licenses/LICENSE-2.0"
-                          rel="noreferrer noopener"
-                          target="_blank"
-                        >
-                          Apache 2.0
+                          https://vchat.m2hio.in
                         </a>
-                        .
                       </Text>
-                    </li>
-                    <li>
+                    </Box>
+                    <Text size="T300">Open Source Components:</Text>
+                    <Box
+                      as="ul"
+                      direction="Column"
+                      gap="200"
+                      style={{
+                        margin: 0,
+                        paddingLeft: config.space.S400,
+                      }}
+                    >
+                      <li>
+                        <Text size="T300">
+                          The{' '}
+                          <a
+                            href="https://github.com/matrix-org/matrix-js-sdk"
+                            rel="noreferrer noopener"
+                            target="_blank"
+                          >
+                            matrix-js-sdk
+                          </a>{' '}
+                          is &copy;{' '}
+                          <a
+                            href="https://matrix.org/foundation"
+                            rel="noreferrer noopener"
+                            target="_blank"
+                          >
+                            The Matrix.org Foundation C.I.C
+                          </a>{' '}
+                          used under the terms of the{' '}
+                          <a
+                            href="http://www.apache.org/licenses/LICENSE-2.0"
+                            rel="noreferrer noopener"
+                            target="_blank"
+                          >
+                            Apache License 2.0
+                          </a>
+                          .
+                        </Text>
+                      </li>
+                      <li>
+                        <Text size="T300">
+                          The{' '}
+                          <a
+                            href="https://github.com/mozilla/twemoji-colr"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            twemoji-colr
+                          </a>{' '}
+                          font is &copy;{' '}
+                          <a
+                            href="https://mozilla.org/"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            Mozilla Foundation
+                          </a>{' '}
+                          used under the terms of the{' '}
+                          <a
+                            href="http://www.apache.org/licenses/LICENSE-2.0"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            Apache License 2.0
+                          </a>
+                          .
+                        </Text>
+                      </li>
+                      <li>
+                        <Text size="T300">
+                          The{' '}
+                          <a
+                            href="https://twemoji.twitter.com"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            Twemoji
+                          </a>{' '}
+                          emoji art is &copy;{' '}
+                          <a
+                            href="https://twemoji.twitter.com"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            Twitter, Inc. and other contributors
+                          </a>{' '}
+                          used under the terms of{' '}
+                          <a
+                            href="https://creativecommons.org/licenses/by/4.0/"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            CC-BY 4.0
+                          </a>
+                          .
+                        </Text>
+                      </li>
+                      <li>
+                        <Text size="T300">
+                          The{' '}
+                          <a
+                            href="https://material.io/design/sound/sound-resources.html"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            Material sound resources
+                          </a>{' '}
+                          are &copy;{' '}
+                          <a href="https://google.com" target="_blank" rel="noreferrer noopener">
+                            Google
+                          </a>{' '}
+                          used under the terms of{' '}
+                          <a
+                            href="https://creativecommons.org/licenses/by/4.0/"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            CC-BY 4.0
+                          </a>
+                          .
+                        </Text>
+                      </li>
+                    </Box>
+                    <Box direction="Column" gap="100">
                       <Text size="T300">
-                        The{' '}
-                        <a
-                          href="https://github.com/mozilla/twemoji-colr"
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          twemoji-colr
-                        </a>{' '}
-                        font is ©{' '}
-                        <a href="https://mozilla.org/" target="_blank" rel="noreferrer noopener">
-                          Mozilla Foundation
-                        </a>{' '}
-                        used under the terms of{' '}
-                        <a
-                          href="http://www.apache.org/licenses/LICENSE-2.0"
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          Apache 2.0
-                        </a>
-                        .
+                        Modifications, branding, and additional development by:
                       </Text>
-                    </li>
-                    <li>
-                      <Text size="T300">
-                        The{' '}
-                        <a
-                          href="https://twemoji.twitter.com"
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          Twemoji
-                        </a>{' '}
-                        emoji art is ©{' '}
-                        <a
-                          href="https://twemoji.twitter.com"
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          Twitter, Inc and other contributors
-                        </a>{' '}
-                        used under the terms of{' '}
-                        <a
-                          href="https://creativecommons.org/licenses/by/4.0/"
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          CC-BY 4.0
-                        </a>
-                        .
-                      </Text>
-                    </li>
-                    <li>
-                      <Text size="T300">
-                        The{' '}
-                        <a
-                          href="https://material.io/design/sound/sound-resources.html"
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          Material sound resources
-                        </a>{' '}
-                        are ©{' '}
-                        <a href="https://google.com" target="_blank" rel="noreferrer noopener">
-                          Google
-                        </a>{' '}
-                        used under the terms of{' '}
-                        <a
-                          href="https://creativecommons.org/licenses/by/4.0/"
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          CC-BY 4.0
-                        </a>
-                        .
-                      </Text>
-                    </li>
+                      <Text size="T300">M2H Web Solution</Text>
+                      <Text size="T300">Developer: Prince Kumar</Text>
+                    </Box>
                   </Box>
                 </SequenceCard>
               </Box>

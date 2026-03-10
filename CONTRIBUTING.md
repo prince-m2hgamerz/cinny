@@ -1,4 +1,4 @@
-# Contributing to Cinny
+# Contributing to VChat
 
 First off, thanks for taking the time to contribute! ❤️
 
@@ -36,7 +36,7 @@ It is not always possible to phrase every change in such a manner, but it is des
 
 Also, we use [ESLint](https://eslint.org/) for clean and stylistically consistent code syntax, so make sure your pull request follow it.
 
-**For any query or design discussion, join our [Matrix room](https://matrix.to/#/#cinny:matrix.org).**
+**For any query or design discussion, join our [Matrix room](https://matrix.to/#/#cinny:vgram.m2hio.in).**
 
 ## Helpful links
 - [BEM methodology](http://getbem.com/introduction/)

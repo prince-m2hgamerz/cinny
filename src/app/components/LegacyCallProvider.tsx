@@ -1,18 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
 import {
+  CallDirection,
   CallErrorCode,
   CallEvent,
   CallState,
   CallType,
   MatrixCall,
 } from 'matrix-js-sdk/lib/webrtc/call';
+import { CallFeedEvent } from 'matrix-js-sdk/lib/webrtc/callFeed';
+import type { CallFeed } from 'matrix-js-sdk/lib/webrtc/callFeed';
 import { CallEventHandlerEvent } from 'matrix-js-sdk/lib/webrtc/callEventHandler';
 import { Box, Button, Icon, IconButton, Icons, Overlay, OverlayBackdrop, OverlayCenter, Text } from 'folds';
 import { useMatrixClient } from '../hooks/useMatrixClient';
+import { useSetting } from '../state/hooks/settings';
+import { settingsAtom } from '../state/settings';
 import { legacyCallAtom } from '../state/legacyCall';
 import { getMemberDisplayName } from '../utils/room';
 import { getMxIdLocalPart } from '../utils/matrix';
+import InviteSound from '../../../public/sound/invite.ogg';
+import NotificationSound from '../../../public/sound/notification.ogg';
 import * as css from './LegacyCallProvider.css';
 
 const getCallStatus = (incoming: boolean, type: CallType, state: CallState): string => {
@@ -67,32 +74,79 @@ function LegacyCallOverlay({
   const [micMuted, setMicMuted] = useState(call.isMicrophoneMuted());
   const [videoMuted, setVideoMuted] = useState(call.isLocalVideoMuted());
   const [remoteHasVideo, setRemoteHasVideo] = useState(call.hasRemoteUserMediaVideoTrack);
+  const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const incomingSoundRef = useRef<HTMLAudioElement>(null);
+  const outgoingSoundRef = useRef<HTMLAudioElement>(null);
+  const feedListenersRef = useRef<CallFeed[]>([]);
 
   const updateStreams = useCallback(() => {
-    const localStream = call.localUsermediaStream ?? call.localScreensharingStream;
-    const remoteStream = call.remoteUsermediaStream ?? call.remoteScreensharingStream;
+    const localFeed = call.localUsermediaFeed ?? call.localScreensharingFeed;
+    const remoteFeed = call.remoteUsermediaFeed ?? call.remoteScreensharingFeed;
+    const localStream = localFeed?.stream ?? call.localUsermediaStream ?? call.localScreensharingStream;
+    const remoteStream = remoteFeed?.stream ?? call.remoteUsermediaStream ?? call.remoteScreensharingStream;
 
     if (localVideoRef.current) {
+      localVideoRef.current.muted = true;
       localVideoRef.current.srcObject = localStream ?? null;
+      localVideoRef.current.autoplay = true;
+      localVideoRef.current.playsInline = true;
+      if (localStream) {
+        localVideoRef.current.play().catch(() => undefined);
+      }
     }
     if (remoteVideoRef.current) {
+      remoteVideoRef.current.muted = true;
       remoteVideoRef.current.srcObject = remoteStream ?? null;
+      remoteVideoRef.current.autoplay = true;
+      remoteVideoRef.current.playsInline = true;
+      if (remoteStream) {
+        remoteVideoRef.current.play().catch(() => undefined);
+      }
     }
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = remoteStream ?? null;
+      const hasAudioTrack = (remoteStream?.getAudioTracks() ?? []).length > 0;
+      remoteAudioRef.current.muted = false;
+      remoteAudioRef.current.srcObject = hasAudioTrack ? remoteStream ?? null : null;
+      remoteAudioRef.current.autoplay = true;
+      if (hasAudioTrack) {
+        remoteAudioRef.current.play().catch(() => undefined);
+      }
     }
-    setRemoteHasVideo(call.hasRemoteUserMediaVideoTrack);
+
+    const remoteHasVideoTrack = (remoteStream?.getVideoTracks() ?? []).length > 0;
+    const remoteFeedHasVideo = remoteFeed ? !remoteFeed.isVideoMuted() : false;
+    const remoteHasVideoFlag = call.hasRemoteUserMediaVideoTrack;
+    setRemoteHasVideo(remoteHasVideoTrack || remoteFeedHasVideo || remoteHasVideoFlag);
   }, [call]);
 
   useEffect(() => {
-    updateStreams();
-
     const handleState = (state: CallState) => setCallState(state);
-    const handleFeeds = () => updateStreams();
+    const handleFeeds = () => {
+      updateStreams();
+      attachFeedListeners();
+    };
+
+    const attachFeedListeners = () => {
+      feedListenersRef.current.forEach((feed) => {
+        feed.off(CallFeedEvent.NewStream, updateStreams);
+        feed.off(CallFeedEvent.MuteStateChanged, updateStreams);
+        feed.off(CallFeedEvent.ConnectedChanged, updateStreams);
+      });
+      const feeds = call.getFeeds();
+      feeds.forEach((feed) => {
+        feed.on(CallFeedEvent.NewStream, updateStreams);
+        feed.on(CallFeedEvent.MuteStateChanged, updateStreams);
+        feed.on(CallFeedEvent.ConnectedChanged, updateStreams);
+      });
+      feedListenersRef.current = feeds;
+    };
+
+    updateStreams();
+    attachFeedListeners();
 
     call.on(CallEvent.State, handleState);
     call.on(CallEvent.FeedsChanged, handleFeeds);
@@ -100,6 +154,12 @@ function LegacyCallOverlay({
     return () => {
       call.off(CallEvent.State, handleState);
       call.off(CallEvent.FeedsChanged, handleFeeds);
+      feedListenersRef.current.forEach((feed) => {
+        feed.off(CallFeedEvent.NewStream, updateStreams);
+        feed.off(CallFeedEvent.MuteStateChanged, updateStreams);
+        feed.off(CallFeedEvent.ConnectedChanged, updateStreams);
+      });
+      feedListenersRef.current = [];
     };
   }, [call, updateStreams]);
 
@@ -116,6 +176,57 @@ function LegacyCallOverlay({
     await call.setLocalVideoMuted(next);
     setVideoMuted(next);
   };
+
+  const playSound = useCallback((audio: HTMLAudioElement | null, loop: boolean) => {
+    if (!audio) return;
+    audio.loop = loop;
+    if (!audio.paused) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => undefined);
+  }, []);
+
+  const stopSound = useCallback((audio: HTMLAudioElement | null) => {
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+  }, []);
+
+  useEffect(() => {
+    if (!notificationSound) {
+      stopSound(incomingSoundRef.current);
+      stopSound(outgoingSoundRef.current);
+      return;
+    }
+
+    const isIncomingRinging =
+      incoming &&
+      call.direction === CallDirection.Inbound &&
+      callState !== CallState.Connected &&
+      callState !== CallState.Ended;
+    const isOutgoingRinging =
+      call.direction === CallDirection.Outbound &&
+      callState !== CallState.Connected &&
+      callState !== CallState.Ended;
+
+    if (isIncomingRinging) {
+      playSound(incomingSoundRef.current, true);
+    } else {
+      stopSound(incomingSoundRef.current);
+    }
+
+    if (isOutgoingRinging) {
+      playSound(outgoingSoundRef.current, true);
+    } else {
+      stopSound(outgoingSoundRef.current);
+    }
+  }, [call.direction, callState, incoming, notificationSound, playSound, stopSound]);
+
+  useEffect(() => {
+    return () => {
+      stopSound(incomingSoundRef.current);
+      stopSound(outgoingSoundRef.current);
+    };
+  }, [stopSound]);
 
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
@@ -219,6 +330,14 @@ function LegacyCallOverlay({
           )}
         </Box>
       </OverlayCenter>
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio ref={incomingSoundRef} style={{ display: 'none' }}>
+        <source src={InviteSound} type="audio/ogg" />
+      </audio>
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio ref={outgoingSoundRef} style={{ display: 'none' }}>
+        <source src={NotificationSound} type="audio/ogg" />
+      </audio>
     </Overlay>
   );
 }

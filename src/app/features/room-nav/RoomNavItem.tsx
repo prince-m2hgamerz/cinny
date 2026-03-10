@@ -1,5 +1,6 @@
-import React, { MouseEventHandler, forwardRef, useState } from 'react';
-import { Room } from 'matrix-js-sdk';
+import React, { MouseEventHandler, forwardRef, useMemo, useState } from 'react';
+import classNames from 'classnames';
+import { MsgType, Room } from 'matrix-js-sdk';
 import {
   Avatar,
   Box,
@@ -53,6 +54,7 @@ import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { useRoomName } from '../../hooks/useRoomMeta';
+import { useRoomLatestRenderedEvent } from '../../hooks/useRoomLatestRenderedEvent';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 import { callChatAtom } from '../../state/callEmbed';
@@ -61,6 +63,9 @@ import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
 import { UserBadges } from '../../components/UserBadges';
 import { getDirectRoomTargetUserId } from '../../utils/verifiedUser';
+import { MessageEvent, StateEvent } from '../../../types/matrix/room';
+import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../utils/time';
+import * as css from './RoomNavItem.css';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -255,6 +260,8 @@ export function RoomNavItem({
 }: RoomNavItemProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
+  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
   const [hover, setHover] = useState(false);
   const { hoverProps } = useHover({ onHoverChange: setHover });
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
@@ -263,6 +270,7 @@ export function RoomNavItem({
   const typingMember = useRoomTypingMember(room.roomId).filter(
     (receipt) => receipt.userId !== mx.getUserId()
   );
+  const latestEvent = useRoomLatestRenderedEvent(room);
 
   const roomName = useRoomName(room);
   const directUserId = direct ? getDirectRoomTargetUserId(room, mx.getSafeUserId()) : undefined;
@@ -306,10 +314,58 @@ export function RoomNavItem({
     }
   };
 
+  const latestPreview = useMemo(() => {
+    if (!latestEvent) return '';
+    if (latestEvent.isRedacted()) return 'Message deleted';
+
+    const senderIsSelf = latestEvent.getSender() === mx.getUserId();
+    const prefix = senderIsSelf ? 'You: ' : '';
+    const type = latestEvent.getType();
+    const content = latestEvent.getContent() ?? {};
+    const normalize = (value?: string): string => (value ? value.replace(/\s+/g, ' ').trim() : '');
+
+    if (type === MessageEvent.RoomMessage) {
+      const msgtype = content.msgtype ?? '';
+      if (msgtype === MsgType.Text || msgtype === MsgType.Notice) {
+        return `${prefix}${normalize(content.body) || 'Message'}`;
+      }
+      if (msgtype === MsgType.Emote) {
+        return `${prefix}${normalize(content.body) || 'Emote'}`;
+      }
+      if (msgtype === MsgType.Image) return `${prefix}Photo`;
+      if (msgtype === MsgType.Video) return `${prefix}Video`;
+      if (msgtype === MsgType.Audio) return `${prefix}Audio`;
+      if (msgtype === MsgType.File) return `${prefix}File`;
+      if (msgtype === MsgType.Location) return `${prefix}Location`;
+      return `${prefix}${normalize(content.body) || 'Message'}`;
+    }
+
+    if (type === MessageEvent.RoomMessageEncrypted) {
+      if (content.msgtype === 'm.bad.encrypted') return `${prefix}Unable to decrypt message`;
+      return `${prefix}Encrypted message`;
+    }
+
+    if (type === MessageEvent.Sticker) return `${prefix}Sticker`;
+    if (type === StateEvent.RoomName) return 'Room name updated';
+    if (type === StateEvent.RoomTopic) return 'Room topic updated';
+    if (type === StateEvent.RoomAvatar) return 'Room photo updated';
+
+    return `${prefix}Message`;
+  }, [latestEvent, mx]);
+
+  const latestTs = latestEvent?.getTs();
+  const latestTime = useMemo(() => {
+    if (!latestTs) return '';
+    if (today(latestTs)) return timeHourMinute(latestTs, hour24Clock);
+    if (yesterday(latestTs)) return 'Yesterday';
+    return timeDayMonYear(latestTs, dateFormatString);
+  }, [latestTs, hour24Clock, dateFormatString]);
+
   return (
     <NavItem
       variant="Background"
       radii="400"
+      className={direct ? css.DirectNavItem : undefined}
       highlight={unread !== undefined}
       aria-selected={selected}
       data-hover={!!menuAnchor}
@@ -318,67 +374,156 @@ export function RoomNavItem({
       {...focusWithinProps}
     >
       <NavLink to={linkPath} onClick={room.isCallRoom() ? handleStartCall : undefined}>
-        <NavItemContent>
-          <Box as="span" grow="Yes" alignItems="Center" gap="200">
-            <Avatar size="200" radii="400">
-              {showAvatar ? (
-                <RoomAvatar
-                  roomId={room.roomId}
-                  src={
-                    direct
-                      ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
-                      : getRoomAvatarUrl(mx, room, 96, useAuthentication)
-                  }
-                  alt={roomName}
-                  renderFallback={() => (
-                    <Text as="span" size="H6">
-                      {nameInitials(roomName)}
+        <NavItemContent className={direct ? css.DirectNavContent : undefined}>
+          {direct ? (
+            <Box as="span" className={css.DirectRow}>
+              <Avatar size="400" radii="400">
+                {showAvatar ? (
+                  <RoomAvatar
+                    roomId={room.roomId}
+                    src={getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)}
+                    alt={roomName}
+                    renderFallback={() => (
+                      <Text as="span" size="H6">
+                        {nameInitials(roomName)}
+                      </Text>
+                    )}
+                  />
+                ) : (
+                  <RoomIcon
+                    style={{
+                      opacity: unread ? config.opacity.P500 : config.opacity.P300,
+                    }}
+                    filled={selected}
+                    size="100"
+                    joinRule={room.getJoinRule()}
+                    roomType={room.getType()}
+                  />
+                )}
+              </Avatar>
+              <Box as="span" className={css.DirectText}>
+                <Box className={css.DirectTopRow}>
+                  <Box className={css.DirectName}>
+                    <Text
+                      priority={unread ? '500' : '300'}
+                      as="span"
+                      size="B300"
+                      className={css.DirectNameText}
+                    >
+                      {roomName}
+                    </Text>
+                    <UserBadges userId={directUserId} size="200" />
+                  </Box>
+                  {latestTime && (
+                    <Text as="span" className={css.DirectTime} truncate>
+                      {latestTime}
                     </Text>
                   )}
-                />
-              ) : (
-                <RoomIcon
-                  style={{
-                    opacity: unread ? config.opacity.P500 : config.opacity.P300,
-                  }}
-                  filled={selected}
-                  size="100"
-                  joinRule={room.getJoinRule()}
-                  roomType={room.getType()}
+                </Box>
+                <Box className={css.DirectBottomRow}>
+                  <Box style={{ minWidth: 0 }}>
+                    {!optionsVisible && !unread && !selected && typingMember.length > 0 ? (
+                      <Box className={css.DirectTyping}>
+                        <TypingIndicator size="300" />
+                        <Text as="span" size="T200" truncate>
+                          Typing...
+                        </Text>
+                      </Box>
+                    ) : (
+                      <Text
+                        as="span"
+                        className={classNames(
+                          css.DirectPreview,
+                          unread ? css.DirectPreviewUnread : undefined
+                        )}
+                        truncate
+                      >
+                        {latestPreview || 'No messages yet'}
+                      </Text>
+                    )}
+                  </Box>
+                  <Box className={css.DirectMeta}>
+                    {!optionsVisible && unread && (
+                      <UnreadBadgeCenter>
+                        <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+                      </UnreadBadgeCenter>
+                    )}
+                    {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (
+                      <Icon
+                        size="50"
+                        src={getRoomNotificationModeIcon(notificationMode)}
+                        aria-label={notificationMode}
+                      />
+                    )}
+                    {room.isCallRoom() && callMembers.length > 0 && (
+                      <Badge variant="Critical" fill="Solid" size="400">
+                        <Text as="span" size="L400" truncate>
+                          {callMembers.length} Live
+                        </Text>
+                      </Badge>
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <Box as="span" grow="Yes" alignItems="Center" gap="200">
+              <Avatar size="200" radii="400">
+                {showAvatar ? (
+                  <RoomAvatar
+                    roomId={room.roomId}
+                    src={getRoomAvatarUrl(mx, room, 96, useAuthentication)}
+                    alt={roomName}
+                    renderFallback={() => (
+                      <Text as="span" size="H6">
+                        {nameInitials(roomName)}
+                      </Text>
+                    )}
+                  />
+                ) : (
+                  <RoomIcon
+                    style={{
+                      opacity: unread ? config.opacity.P500 : config.opacity.P300,
+                    }}
+                    filled={selected}
+                    size="100"
+                    joinRule={room.getJoinRule()}
+                    roomType={room.getType()}
+                  />
+                )}
+              </Avatar>
+              <Box as="span" grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
+                <Text priority={unread ? '500' : '300'} as="span" size="Inherit" truncate>
+                  {roomName}
+                </Text>
+                <UserBadges userId={directUserId} size="200" />
+              </Box>
+              {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
+                <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
+                  <TypingIndicator size="300" disableAnimation />
+                </Badge>
+              )}
+              {!optionsVisible && unread && (
+                <UnreadBadgeCenter>
+                  <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+                </UnreadBadgeCenter>
+              )}
+              {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (
+                <Icon
+                  size="50"
+                  src={getRoomNotificationModeIcon(notificationMode)}
+                  aria-label={notificationMode}
                 />
               )}
-            </Avatar>
-            <Box as="span" grow="Yes" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
-              <Text priority={unread ? '500' : '300'} as="span" size="Inherit" truncate>
-                {roomName}
-              </Text>
-              <UserBadges userId={directUserId} size="200" />
+              {room.isCallRoom() && callMembers.length > 0 && (
+                <Badge variant="Critical" fill="Solid" size="400">
+                  <Text as="span" size="L400" truncate>
+                    {callMembers.length} Live
+                  </Text>
+                </Badge>
+              )}
             </Box>
-            {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
-              <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
-                <TypingIndicator size="300" disableAnimation />
-              </Badge>
-            )}
-            {!optionsVisible && unread && (
-              <UnreadBadgeCenter>
-                <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-              </UnreadBadgeCenter>
-            )}
-            {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (
-              <Icon
-                size="50"
-                src={getRoomNotificationModeIcon(notificationMode)}
-                aria-label={notificationMode}
-              />
-            )}
-            {room.isCallRoom() && callMembers.length > 0 && (
-              <Badge variant="Critical" fill="Solid" size="400">
-                <Text as="span" size="L400" truncate>
-                  {callMembers.length} Live
-                </Text>
-              </Badge>
-            )}
-          </Box>
+          )}
         </NavItemContent>
       </NavLink>
       {optionsVisible && (

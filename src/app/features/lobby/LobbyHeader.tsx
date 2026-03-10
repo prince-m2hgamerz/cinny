@@ -8,6 +8,9 @@ import {
   Line,
   Menu,
   MenuItem,
+  Overlay,
+  OverlayBackdrop,
+  OverlayCenter,
   PopOut,
   RectCords,
   Text,
@@ -38,6 +41,9 @@ import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { ReportDialog } from '../../components/ReportDialog';
+import { sendReport } from '../../utils/report';
+import { getMemberDisplayName } from '../../utils/room';
 
 type LobbyMenuProps = {
   powerLevels: IPowerLevels;
@@ -54,6 +60,12 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
     const openSpaceSettings = useOpenSpaceSettings();
 
     const [invitePrompt, setInvitePrompt] = useState(false);
+    const [reportPrompt, setReportPrompt] = useState(false);
+
+    const reporterUserId = mx.getSafeUserId() ?? undefined;
+    const reporterDisplayName = reporterUserId
+      ? getMemberDisplayName(space, reporterUserId) ?? reporterUserId
+      : undefined;
 
     const handleInvite = () => {
       setInvitePrompt(true);
@@ -62,6 +74,26 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
     const handleRoomSettings = () => {
       openSpaceSettings(space.roomId);
       requestClose();
+    };
+
+    const handleReportSpace = async ({
+      reason,
+      details,
+    }: {
+      reason: string;
+      details?: string;
+    }) => {
+      await sendReport({
+        targetType: 'space',
+        reason,
+        details,
+        reporterUserId,
+        reporterDisplayName,
+        targetId: space.roomId,
+        targetName: space.name,
+        spaceId: space.roomId,
+        spaceName: space.name,
+      });
     };
 
     return (
@@ -75,6 +107,18 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
             }}
           />
         )}
+        <Overlay open={reportPrompt} backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <ReportDialog
+              open={reportPrompt}
+              title="Report Space"
+              targetLabel="Space"
+              helperText="Report this space for review. The report will be forwarded to the moderation channel."
+              requestClose={() => setReportPrompt(false)}
+              onSubmit={handleReportSpace}
+            />
+          </OverlayCenter>
+        </Overlay>
         <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
           <MenuItem
             onClick={handleInvite}
@@ -98,6 +142,19 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Space Settings
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={() => setReportPrompt(true)}
+            variant="Critical"
+            fill="None"
+            size="300"
+            after={<Icon size="100" src={Icons.Warning} />}
+            radii="300"
+            aria-pressed={reportPrompt}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Report Space
             </Text>
           </MenuItem>
         </Box>

@@ -18,6 +18,7 @@ import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
 import { CallChatView } from './CallChatView';
+import { useCallEmbed } from '../../hooks/useCallEmbed';
 
 export function Room() {
   const { eventId } = useParams();
@@ -30,6 +31,7 @@ export function Room() {
   const powerLevels = usePowerLevels(room);
   const members = useRoomMembers(mx, room.roomId);
   const chat = useAtomValue(callChatAtom);
+  const callEmbed = useCallEmbed();
 
   useKeyDown(
     window,
@@ -43,7 +45,7 @@ export function Room() {
     )
   );
 
-  const callView = room.isCallRoom();
+  const callView = room.isCallRoom() || callEmbed?.roomId === room.roomId;
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>

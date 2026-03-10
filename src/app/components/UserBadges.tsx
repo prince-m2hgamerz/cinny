@@ -1,23 +1,31 @@
-import React from 'react';
-import { getUserIdentityMeta } from '../utils/verifiedUser';
+import React, { useMemo } from 'react';
+import { useClientConfig } from '../hooks/useClientConfig';
+import { createUserIdentityMap, getUserIdentityMeta } from '../utils/verifiedUser';
 import { VerifiedBadge } from './VerifiedBadge';
 import * as css from './UserBadges.css';
 
-type UserBadgesProps = css.UserRoleTagVariants & {
+type UserBadgesProps = Pick<css.UserRoleTagVariants, 'size'> & {
   userId: string | null | undefined;
   withGap?: boolean;
 };
 
 export function UserBadges({ userId, size, withGap }: UserBadgesProps) {
-  const meta = getUserIdentityMeta(userId);
+  const { userIdentities } = useClientConfig();
+  const identityMap = useMemo(() => createUserIdentityMap(userIdentities), [userIdentities]);
+  const meta = getUserIdentityMeta(userId, identityMap);
 
-  if (!meta) return null;
+  if (!meta || (!meta.verified && !meta.tag)) return null;
 
   return (
     <span className={css.UserBadges} style={withGap ? { marginLeft: '0.25em' } : undefined}>
-      <VerifiedBadge size={size} title={meta.tag ? `Verified ${meta.tag}` : 'Verified account'} />
+      {meta.verified && (
+        <VerifiedBadge
+          size={size}
+          title={meta.badgeTitle ?? (meta.tag ? `Verified ${meta.tag}` : 'Verified account')}
+        />
+      )}
       {meta.tag && (
-        <span className={css.UserRoleTag({ size })} title={meta.tag}>
+        <span className={css.UserRoleTag({ size, tone: meta.tagTone ?? 'critical' })} title={meta.tag}>
           {meta.tag}
         </span>
       )}

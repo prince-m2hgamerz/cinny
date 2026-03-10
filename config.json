@@ -13,6 +13,43 @@
     ],
     "servers": ["vgram.m2hio.in"]
   },
+  "userIdentities": [
+    {
+      "userId": "@m2h:vgram.m2hio.in",
+      "verified": true,
+      "tag": "CEO",
+      "tagTone": "critical",
+      "badgeTitle": "Verified CEO"
+    },
+    {
+      "userId": "@admin:vgram.m2hio.in",
+      "verified": true,
+      "tag": "ADMIN",
+      "tagTone": "blue",
+      "badgeTitle": "Verified admin"
+    },
+    {
+      "userId": "@verma6307:vgram.m2hio.in",
+      "verified": true,
+      "tag": "Tester",
+      "tagTone": "green",
+      "badgeTitle": "Verified tester"
+    },
+    {
+      "userId": "@raosahab:vgram.m2hio.in",
+      "verified": true,
+      "tag": "Tester",
+      "tagTone": "green",
+      "badgeTitle": "Verified tester"
+    },
+    {
+      "userId": "@krish:vgram.m2hio.in",
+      "verified": true,
+      "tag": "Administrator",
+      "tagTone": "gold",
+      "badgeTitle": "Verified administrator"
+    }
+  ],
 
   "hashRouter": {
     "enabled": false,

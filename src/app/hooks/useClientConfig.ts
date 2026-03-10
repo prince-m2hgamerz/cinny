@@ -5,6 +5,16 @@ export type HashRouterConfig = {
   basename?: string;
 };
 
+export type UserIdentityTagTone = 'critical' | 'blue' | 'green' | 'gold' | 'gray';
+
+export type UserIdentityConfig = {
+  userId: string;
+  verified?: boolean;
+  tag?: string;
+  tagTone?: UserIdentityTagTone;
+  badgeTitle?: string;
+};
+
 export type ClientConfig = {
   defaultHomeserver?: number;
   homeserverList?: string[];
@@ -18,6 +28,7 @@ export type ClientConfig = {
   };
 
   hashRouter?: HashRouterConfig;
+  userIdentities?: UserIdentityConfig[];
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

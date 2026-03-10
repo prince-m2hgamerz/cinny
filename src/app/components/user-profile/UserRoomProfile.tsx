@@ -1,8 +1,8 @@
-import { Box, Button, config, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import { Box, Button, config, Icon, Icons, Overlay, OverlayBackdrop, OverlayCenter, Text } from 'folds';
+import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserHero, UserHeroName } from './UserHero';
-import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
+import { getMxIdLocalPart, getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
@@ -22,6 +22,8 @@ import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
+import { ReportDialog } from '../ReportDialog';
+import { sendReport } from '../../utils/report';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -35,6 +37,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
   const ignored = ignoredUsers.includes(userId);
 
   const room = useRoom();
+  const [reportOpen, setReportOpen] = useState(false);
   const powerLevels = usePowerLevels(room);
   const creators = useRoomCreators(room);
 
@@ -67,8 +70,41 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     navigate(withSearchParam(getDirectCreatePath(), directSearchParam));
   };
 
+  const handleReportUser = useCallback(
+    async ({ reason, details }: { reason: string; details?: string }) => {
+      await sendReport({
+        targetType: 'user',
+        reason,
+        details,
+        reporterUserId: mx.getSafeUserId() ?? undefined,
+        reporterDisplayName:
+          getMemberDisplayName(room, mx.getSafeUserId() ?? '') ??
+          mx.getSafeUserId() ??
+          undefined,
+        targetId: userId,
+        targetName: displayName ?? getMxIdLocalPart(userId) ?? userId,
+        targetUserId: userId,
+        roomId: room.roomId,
+        roomName: room.name,
+      });
+    },
+    [displayName, mx, room, userId]
+  );
+
   return (
     <Box direction="Column">
+      <Overlay open={reportOpen} backdrop={<OverlayBackdrop />}>
+        <OverlayCenter>
+          <ReportDialog
+            open={reportOpen}
+            title="Report User"
+            targetLabel="User"
+            helperText="Report this user for review. The report will be forwarded to the moderation channel."
+            requestClose={() => setReportOpen(false)}
+            onSubmit={handleReportUser}
+          />
+        </OverlayCenter>
+      </Overlay>
       <UserHero
         userId={userId}
         avatarUrl={avatarUrl}
@@ -79,7 +115,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
           <Box gap="400" alignItems="Start">
             <UserHeroName displayName={displayName} userId={userId} />
             {userId !== myUserId && (
-              <Box shrink="No">
+              <Box shrink="No" direction="Column" gap="200">
                 <Button
                   size="300"
                   variant="Primary"
@@ -89,6 +125,16 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                   onClick={handleMessage}
                 >
                   <Text size="B300">Message</Text>
+                </Button>
+                <Button
+                  size="300"
+                  variant="Critical"
+                  fill="Soft"
+                  radii="300"
+                  before={<Icon size="50" src={Icons.Warning} />}
+                  onClick={() => setReportOpen(true)}
+                >
+                  <Text size="B300">Report</Text>
                 </Button>
               </Box>
             )}

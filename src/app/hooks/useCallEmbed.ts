@@ -48,7 +48,7 @@ export const createCallEmbed = (
   const ongoing =
     MatrixRTCSession.sessionMembershipsForRoom(room, rtcSession.sessionDescription).length > 0;
 
-  const intent = CallEmbed.getIntent(dm, ongoing);
+  const intent = CallEmbed.getIntent(dm, ongoing, dm && pref?.video === false);
   const widget = CallEmbed.getWidget(mx, room, intent, themeKind);
   const controlState = pref && new CallControlState(pref.microphone, pref.video, pref.sound);
 

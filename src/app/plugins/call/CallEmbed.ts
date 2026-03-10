@@ -47,7 +47,11 @@ export class CallEmbed {
 
   private readonly disposables: Array<() => void> = [];
 
-  static getIntent(dm: boolean, ongoing: boolean): ElementCallIntent {
+  static getIntent(dm: boolean, ongoing: boolean, audioOnly = false): ElementCallIntent {
+    if (dm && audioOnly) {
+      return ongoing ? ElementCallIntent.JoinExistingDMVoice : ElementCallIntent.StartCallDMVoice;
+    }
+
     if (ongoing) {
       return dm ? ElementCallIntent.JoinExistingDM : ElementCallIntent.JoinExisting;
     }

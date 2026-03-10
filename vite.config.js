@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { wasm } from '@rollup/plugin-wasm';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -74,65 +74,141 @@ function serverMatrixSdkCryptoWasm(wasmFilePath) {
   };
 }
 
-export default defineConfig({
-  appType: 'spa',
-  publicDir: false,
-  base: buildConfig.base,
-  server: {
-    port: 8080,
-    host: true,
-    fs: {
-      // Allow serving files from one level up to the project root
-      allow: ['..'],
+const getRequestBody = (req) =>
+  new Promise((resolve, reject) => {
+    let body = '';
+
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => resolve(body));
+    req.on('error', reject);
+  });
+
+function serveLocalReportApi() {
+  let reportHandlerPromise;
+
+  const loadReportHandler = async () => {
+    if (!reportHandlerPromise) {
+      reportHandlerPromise = import(new URL('./api/report.js', import.meta.url).href).then(
+        (module) => module.default
+      );
+    }
+
+    return reportHandlerPromise;
+  };
+
+  const handleReportRequest = async (req, res, next) => {
+    const pathname = req.url?.split('?')[0];
+    if (pathname !== '/api/report') {
+      next();
+      return;
+    }
+
+    try {
+      if (req.method === 'POST' && req.body === undefined) {
+        req.body = await getRequestBody(req);
+      }
+
+      const reportHandler = await loadReportHandler();
+      await reportHandler(req, res);
+    } catch (error) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(
+        JSON.stringify({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to process report request on the local server',
+        })
+      );
+    }
+  };
+
+  return {
+    name: 'vite-plugin-serve-local-report-api',
+    configureServer(server) {
+      server.middlewares.use(handleReportRequest);
     },
-  },
-  plugins: [
-    serverMatrixSdkCryptoWasm('/node_modules/.vite/deps/pkg/matrix_sdk_crypto_wasm_bg.wasm'),
-    topLevelAwait({
-      // The export name of top-level await promise for each chunk module
-      promiseExportName: '__tla',
-      // The function to generate import names of top-level await promise in each chunk module
-      promiseImportName: (i) => `__tla_${i}`,
-    }),
-    viteStaticCopy(copyFiles),
-    vanillaExtractPlugin(),
-    wasm(),
-    react(),
-    VitePWA({
-      srcDir: 'src',
-      filename: 'sw.ts',
-      strategies: 'injectManifest',
-      injectRegister: false,
-      manifest: false,
-      injectManifest: {
-        injectionPoint: undefined,
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module',
-      },
-    }),
-  ],
-  optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        global: 'globalThis',
-      },
-      plugins: [
-        // Enable esbuild polyfill plugins
-        NodeGlobalsPolyfillPlugin({
-          process: false,
-          buffer: true,
-        }),
-      ],
+    configurePreviewServer(server) {
+      server.middlewares.use(handleReportRequest);
     },
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    copyPublicDir: false,
-    rollupOptions: {
-      plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  if (!process.env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_BOT_TOKEN) {
+    process.env.TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
+  }
+
+  if (!process.env.TELEGRAM_REPORT_CHANNEL_ID && env.TELEGRAM_REPORT_CHANNEL_ID) {
+    process.env.TELEGRAM_REPORT_CHANNEL_ID = env.TELEGRAM_REPORT_CHANNEL_ID;
+  }
+
+  return {
+    appType: 'spa',
+    publicDir: false,
+    base: buildConfig.base,
+    server: {
+      port: 8080,
+      host: true,
+      fs: {
+        // Allow serving files from one level up to the project root
+        allow: ['..'],
+      },
     },
-  },
+    plugins: [
+      serveLocalReportApi(),
+      serverMatrixSdkCryptoWasm('/node_modules/.vite/deps/pkg/matrix_sdk_crypto_wasm_bg.wasm'),
+      topLevelAwait({
+        // The export name of top-level await promise for each chunk module
+        promiseExportName: '__tla',
+        // The function to generate import names of top-level await promise in each chunk module
+        promiseImportName: (i) => `__tla_${i}`,
+      }),
+      viteStaticCopy(copyFiles),
+      vanillaExtractPlugin(),
+      wasm(),
+      react(),
+      VitePWA({
+        srcDir: 'src',
+        filename: 'sw.ts',
+        strategies: 'injectManifest',
+        injectRegister: false,
+        manifest: false,
+        injectManifest: {
+          injectionPoint: undefined,
+        },
+        devOptions: {
+          enabled: true,
+          type: 'module',
+        },
+      }),
+    ],
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
+        plugins: [
+          // Enable esbuild polyfill plugins
+          NodeGlobalsPolyfillPlugin({
+            process: false,
+            buffer: true,
+          }),
+        ],
+      },
+    },
+    build: {
+      outDir: 'dist',
+      sourcemap: true,
+      copyPublicDir: false,
+      rollupOptions: {
+        plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
+      },
+    },
+  };
 });

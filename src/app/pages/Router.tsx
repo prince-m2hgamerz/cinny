@@ -70,6 +70,7 @@ import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
 import { CallStatusRenderer } from './CallStatusRenderer';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
+import { LegacyCallProvider } from '../components/LegacyCallProvider';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -137,6 +138,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                           <Outlet />
                         </ClientLayout>
                         <CallStatusRenderer />
+                        <LegacyCallProvider />
                       </CallEmbedProvider>
                       <SearchModalRenderer />
                       <UserRoomProfileRenderer />

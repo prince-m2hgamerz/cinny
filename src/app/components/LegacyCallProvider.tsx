@@ -65,7 +65,7 @@ function LegacyCallOverlay({
   const [callState, setCallState] = useState(call.state);
   const [micMuted, setMicMuted] = useState(call.isMicrophoneMuted());
   const [videoMuted, setVideoMuted] = useState(call.isLocalVideoMuted());
-  const [remoteHasVideo, setRemoteHasVideo] = useState(call.hasRemoteUserMediaVideoTrack());
+  const [remoteHasVideo, setRemoteHasVideo] = useState(call.hasRemoteUserMediaVideoTrack);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -84,7 +84,7 @@ function LegacyCallOverlay({
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = remoteStream ?? null;
     }
-    setRemoteHasVideo(call.hasRemoteUserMediaVideoTrack());
+    setRemoteHasVideo(call.hasRemoteUserMediaVideoTrack);
   }, [call]);
 
   useEffect(() => {

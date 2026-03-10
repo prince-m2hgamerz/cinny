@@ -11,7 +11,9 @@ const VERIFIED_USERS: Record<string, UserIdentityMeta> = {
   },
   '@admin:vgram.m2hio.in': {},
   '@verma6307:vgram.m2hio.in': {},
-  '@krish:vgram.m2hio.in': {},
+  '@krish:vgram.m2hio.in': {
+    tag: 'Administrator ',
+  },
 };
 
 export const getUserIdentityMeta = (

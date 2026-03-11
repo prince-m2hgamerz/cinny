@@ -15,6 +15,13 @@ export type UserIdentityConfig = {
   badgeTitle?: string;
 };
 
+export type AdminPanelConfig = {
+  enabled?: boolean;
+  url?: string;
+  allowedUserIds?: string[];
+  identityRoom?: string;
+};
+
 export type ClientConfig = {
   defaultHomeserver?: number;
   homeserverList?: string[];
@@ -29,6 +36,7 @@ export type ClientConfig = {
 
   hashRouter?: HashRouterConfig;
   userIdentities?: UserIdentityConfig[];
+  adminPanel?: AdminPanelConfig;
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

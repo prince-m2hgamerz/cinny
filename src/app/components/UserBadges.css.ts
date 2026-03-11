@@ -10,8 +10,10 @@ export const UserBadges = style({
   display: 'inline-flex',
   alignItems: 'center',
   gap: config.space.S100,
-  flexWrap: 'wrap',
+  flexWrap: 'nowrap',
   verticalAlign: 'middle',
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
 });
 
 export const UserRoleTag = recipe({

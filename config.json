@@ -50,6 +50,12 @@
       "badgeTitle": "Verified administrator"
     }
   ],
+  "adminPanel": {
+    "enabled": true,
+    "url": "https://awesome-technologies.github.io/synapse-admin/",
+    "identityRoom": "#vchat:vgram.m2hio.in",
+    "allowedUserIds": ["@m2h:vgram.m2hio.in"]
+  },
 
   "hashRouter": {
     "enabled": false,

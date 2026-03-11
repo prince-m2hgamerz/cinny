@@ -412,7 +412,7 @@ export function RoomNavItem({
                     >
                       {roomName}
                     </Text>
-                    <UserBadges userId={directUserId} size="200" />
+                    <UserBadges userId={directUserId} size="100" withGap />
                   </Box>
                   {latestTime && (
                     <Text as="span" className={css.DirectTime} truncate>
@@ -434,9 +434,9 @@ export function RoomNavItem({
                         as="span"
                         className={classNames(
                           css.DirectPreview,
+                          css.DirectPreviewText,
                           unread ? css.DirectPreviewUnread : undefined
                         )}
-                        truncate
                       >
                         {latestPreview || 'No messages yet'}
                       </Text>

@@ -9,6 +9,15 @@ export type UserIdentityMeta = {
   badgeTitle?: string;
 };
 
+export const USER_IDENTITIES_EVENT_TYPE = 'org.vchat.user_identities';
+
+export type UserIdentityOverridesEventContent = {
+  version?: number;
+  updatedAt?: string;
+  updatedBy?: string;
+  identities?: UserIdentityConfig[];
+};
+
 const DEFAULT_USER_IDENTITIES: Record<string, UserIdentityMeta> = {
   '@m2h:vgram.m2hio.in': {
     verified: true,
@@ -36,6 +45,15 @@ const DEFAULT_USER_IDENTITIES: Record<string, UserIdentityMeta> = {
   },
 };
 
+const USER_IDENTITIES_STORAGE_KEY = 'vchat.userIdentities';
+
+const isTagTone = (value: unknown): value is UserIdentityTagTone =>
+  value === 'critical' ||
+  value === 'blue' ||
+  value === 'green' ||
+  value === 'gold' ||
+  value === 'gray';
+
 const normalizeMeta = (meta: UserIdentityMeta): UserIdentityMeta => {
   const tag = typeof meta.tag === 'string' && meta.tag.trim() ? meta.tag.trim() : undefined;
   const badgeTitle =
@@ -51,8 +69,70 @@ const normalizeMeta = (meta: UserIdentityMeta): UserIdentityMeta => {
   };
 };
 
+export const normalizeIdentityConfig = (
+  identity: UserIdentityConfig
+): UserIdentityConfig | undefined => {
+  if (typeof identity.userId !== 'string') return undefined;
+  const userId = identity.userId.trim();
+  if (userId === '') return undefined;
+
+  const tag = typeof identity.tag === 'string' ? identity.tag.trim() : undefined;
+  const badgeTitle =
+    typeof identity.badgeTitle === 'string' ? identity.badgeTitle.trim() : undefined;
+  const tagTone = isTagTone(identity.tagTone) ? identity.tagTone : 'critical';
+
+  return {
+    userId,
+    verified: identity.verified ?? true,
+    tag,
+    tagTone,
+    badgeTitle,
+  };
+};
+
+export const normalizeIdentityList = (value: unknown): UserIdentityConfig[] => {
+  if (!Array.isArray(value)) return [];
+  const identityMap = new Map<string, UserIdentityConfig>();
+  value.forEach((entry) => {
+    const normalized = normalizeIdentityConfig(entry as UserIdentityConfig);
+    if (!normalized) return;
+    identityMap.set(normalized.userId, normalized);
+  });
+  return Array.from(identityMap.values()).sort((a, b) => a.userId.localeCompare(b.userId));
+};
+
+export const extractUserIdentityListFromContent = (
+  content: unknown
+): UserIdentityConfig[] | null => {
+  if (Array.isArray(content)) return normalizeIdentityList(content);
+  if (!content || typeof content !== 'object') return null;
+  const identities =
+    (content as UserIdentityOverridesEventContent).identities ??
+    (content as { users?: unknown }).users;
+  if (identities === undefined) return null;
+  return normalizeIdentityList(identities);
+};
+
+export const loadUserIdentityOverrides = (): UserIdentityConfig[] => {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(USER_IDENTITIES_STORAGE_KEY);
+    if (!raw) return [];
+    const data = JSON.parse(raw);
+    return normalizeIdentityList(data);
+  } catch {
+    return [];
+  }
+};
+
+export const saveUserIdentityOverrides = (identities: UserIdentityConfig[]): void => {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(USER_IDENTITIES_STORAGE_KEY, JSON.stringify(identities, null, 2));
+};
+
 export const createUserIdentityMap = (
-  userIdentities?: UserIdentityConfig[]
+  userIdentities?: UserIdentityConfig[],
+  overrides?: UserIdentityConfig[] | null
 ): Record<string, UserIdentityMeta> => {
   const identityMap: Record<string, UserIdentityMeta> = {};
 
@@ -63,12 +143,16 @@ export const createUserIdentityMap = (
   }
 
   userIdentities?.forEach((identity) => {
-    if (typeof identity.userId !== 'string') return;
+    const normalized = normalizeIdentityConfig(identity);
+    if (!normalized) return;
+    identityMap[normalized.userId] = normalizeMeta(normalized);
+  });
 
-    const userId = identity.userId.trim();
-    if (userId === '') return;
-
-    identityMap[userId] = normalizeMeta(identity);
+  const resolvedOverrides = overrides ?? loadUserIdentityOverrides();
+  resolvedOverrides.forEach((identity) => {
+    const normalized = normalizeIdentityConfig(identity);
+    if (!normalized) return;
+    identityMap[normalized.userId] = normalizeMeta(normalized);
   });
 
   return identityMap;

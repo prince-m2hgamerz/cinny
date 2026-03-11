@@ -1,5 +1,7 @@
+import { useAtomValue } from 'jotai';
 import React, { useMemo } from 'react';
 import { useClientConfig } from '../hooks/useClientConfig';
+import { userIdentityOverridesAtom } from '../state/userIdentities';
 import { createUserIdentityMap, getUserIdentityMeta } from '../utils/verifiedUser';
 import { VerifiedBadge } from './VerifiedBadge';
 import * as css from './UserBadges.css';
@@ -11,7 +13,11 @@ type UserBadgesProps = Pick<css.UserRoleTagVariants, 'size'> & {
 
 export function UserBadges({ userId, size, withGap }: UserBadgesProps) {
   const { userIdentities } = useClientConfig();
-  const identityMap = useMemo(() => createUserIdentityMap(userIdentities), [userIdentities]);
+  const overrides = useAtomValue(userIdentityOverridesAtom);
+  const identityMap = useMemo(
+    () => createUserIdentityMap(userIdentities, overrides),
+    [overrides, userIdentities]
+  );
   const meta = getUserIdentityMeta(userId, identityMap);
 
   if (!meta || (!meta.verified && !meta.tag)) return null;

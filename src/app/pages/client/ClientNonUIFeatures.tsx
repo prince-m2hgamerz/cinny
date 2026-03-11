@@ -1,7 +1,7 @@
-import { useAtomValue } from 'jotai';
-import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
+import { MatrixEvent, RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
 import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '../../state/room/roomToUnread';
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
@@ -14,6 +14,7 @@ import { settingsAtom } from '../../state/settings';
 import { allInvitesAtom } from '../../state/room-list/inviteList';
 import { usePreviousValue } from '../../hooks/usePreviousValue';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useClientConfig } from '../../hooks/useClientConfig';
 import { getInboxInvitesPath, getInboxNotificationsPath } from '../pathUtils';
 import {
   getMemberDisplayName,
@@ -26,6 +27,14 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useStateEventCallback } from '../../hooks/useStateEventCallback';
+import { userIdentityOverridesAtom } from '../../state/userIdentities';
+import {
+  extractUserIdentityListFromContent,
+  loadUserIdentityOverrides,
+  saveUserIdentityOverrides,
+  USER_IDENTITIES_EVENT_TYPE,
+} from '../../utils/verifiedUser';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -253,6 +262,82 @@ function MessageNotifications() {
   );
 }
 
+function UserIdentitySync() {
+  const mx = useMatrixClient();
+  const { adminPanel } = useClientConfig();
+  const setOverrides = useSetAtom(userIdentityOverridesAtom);
+  const identityRoomRef = adminPanel?.identityRoom?.trim() ?? '#vchat:vgram.m2hio.in';
+  const [identityRoomId, setIdentityRoomId] = useState<string | null>(null);
+  const identityRoomIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setOverrides(loadUserIdentityOverrides());
+  }, [setOverrides]);
+
+  useEffect(() => {
+    identityRoomIdRef.current = identityRoomId;
+  }, [identityRoomId]);
+
+  useEffect(() => {
+    let active = true;
+    const resolveRoomId = async () => {
+      if (!identityRoomRef) {
+        if (active) setIdentityRoomId(null);
+        return;
+      }
+      if (identityRoomRef.startsWith('!')) {
+        if (active) setIdentityRoomId(identityRoomRef);
+        return;
+      }
+      if (!identityRoomRef.startsWith('#')) {
+        if (active) setIdentityRoomId(null);
+        return;
+      }
+      try {
+        const result = await mx.getRoomIdForAlias(identityRoomRef);
+        if (active) setIdentityRoomId(result.room_id);
+      } catch {
+        if (active) setIdentityRoomId(null);
+      }
+    };
+    resolveRoomId();
+    return () => {
+      active = false;
+    };
+  }, [identityRoomRef, mx]);
+
+  const applyOverrides = useCallback(
+    (event: MatrixEvent) => {
+      const identities = extractUserIdentityListFromContent(event.getContent());
+      if (identities === null) return;
+      setOverrides(identities);
+      saveUserIdentityOverrides(identities);
+    },
+    [setOverrides]
+  );
+
+  useEffect(() => {
+    if (!identityRoomId) return;
+    const room = mx.getRoom(identityRoomId);
+    const stateEvent = room?.currentState.getStateEvents(USER_IDENTITIES_EVENT_TYPE, '');
+    if (stateEvent) applyOverrides(stateEvent);
+  }, [applyOverrides, identityRoomId, mx]);
+
+  const handleStateEvent = useCallback(
+    (event: MatrixEvent) => {
+      if (event.getType() !== USER_IDENTITIES_EVENT_TYPE) return;
+      if (!identityRoomIdRef.current) return;
+      if (event.getRoomId() !== identityRoomIdRef.current) return;
+      applyOverrides(event);
+    },
+    [applyOverrides]
+  );
+
+  useStateEventCallback(mx, handleStateEvent);
+
+  return null;
+}
+
 type ClientNonUIFeaturesProps = {
   children: ReactNode;
 };
@@ -265,6 +350,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />
+      <UserIdentitySync />
       {children}
     </>
   );

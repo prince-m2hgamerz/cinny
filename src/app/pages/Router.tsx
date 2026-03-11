@@ -16,6 +16,7 @@ import {
   HOME_PATH,
   LOGIN_PATH,
   INBOX_PATH,
+  ADMIN_PATH,
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
   SPACE_PATH,
@@ -45,6 +46,7 @@ import { Direct, DirectCreate, DirectRouteRoomProvider } from './client/direct';
 import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
 import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
+import { AdminPanel } from './client/admin/AdminPanel';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
@@ -297,6 +299,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
           <Route path={_INVITES_PATH} element={<Invites />} />
         </Route>
+        <Route path={ADMIN_PATH} element={<AdminPanel />} />
       </Route>
       <Route path="/*" element={<p>Page not found</p>} />
     </Route>

@@ -51,6 +51,7 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import * as css from './Direct.css';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -99,7 +100,7 @@ function DirectHeader() {
 
   return (
     <>
-      <PageNavHeader>
+      <PageNavHeader className={css.DirectPageHeader}>
         <Box alignItems="Center" grow="Yes" gap="300">
           <Box grow="Yes">
             <Text size="H4" truncate>
@@ -203,7 +204,7 @@ export function Direct() {
   );
 
   return (
-    <PageNav>
+    <PageNav className={css.DirectPageNav}>
       <DirectHeader />
       {noRoomToDisplay ? (
         <DirectEmpty />

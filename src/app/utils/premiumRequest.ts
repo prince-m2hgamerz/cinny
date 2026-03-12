@@ -79,6 +79,7 @@ export const fetchPremiumRequests = async (): Promise<PremiumRequestRecord[]> =>
 
 export const updatePremiumRequestStatus = async (payload: {
   userId: string;
+  requestId?: string;
   status: PremiumRequestStatus['status'];
   plan?: PremiumPlan;
   amount?: string;

@@ -226,6 +226,24 @@ export function AdminPanel() {
 
   const validateUserId = (value: string) => /^@.+:.+$/.test(value);
 
+  const ensureIdentityRoomJoined = async () => {
+    if (!identityRoomRef) return;
+    try {
+      await mx.joinRoom(identityRoomRef);
+    } catch {
+      // ignore join failures, handled in publish error
+    }
+  };
+
+  const formatStateEventError = (err: unknown) => {
+    const anyErr = err as { errcode?: string; message?: string; data?: { errcode?: string } };
+    const code = anyErr?.errcode ?? anyErr?.data?.errcode;
+    if (code === 'M_FORBIDDEN') {
+      return 'You do not have permission to send state events in the identity room. Give this account a higher power level.';
+    }
+    return 'Failed to publish badge updates. Make sure you are joined to the identity room and have permission to send state events.';
+  };
+
   const publishOverrides = async (nextOverrides: UserIdentityConfig[]) => {
     if (!identityRoomId) {
       setError(
@@ -251,10 +269,32 @@ export function AdminPanel() {
       saveUserIdentityOverrides(normalized);
       setOverrides(normalized);
       setError(null);
-    } catch {
-      setError(
-        'Failed to publish badge updates. Make sure you are joined to the identity room and have permission to send state events.'
-      );
+    } catch (err) {
+      const room = mx.getRoom(identityRoomId);
+      if (room?.getMyMembership?.() !== 'join') {
+        await ensureIdentityRoomJoined();
+        try {
+          await mx.sendStateEvent(
+            identityRoomId,
+            USER_IDENTITIES_EVENT_TYPE,
+            {
+              version: 1,
+              updatedAt: new Date().toISOString(),
+              updatedBy: userId || undefined,
+              identities: normalized,
+            },
+            ''
+          );
+          saveUserIdentityOverrides(normalized);
+          setOverrides(normalized);
+          setError(null);
+          return;
+        } catch (retryErr) {
+          setError(formatStateEventError(retryErr));
+        }
+      } else {
+        setError(formatStateEventError(err));
+      }
     } finally {
       setSaving(false);
     }
@@ -284,10 +324,32 @@ export function AdminPanel() {
       savePremiumSettings(nextSettings);
       setPremiumSettings(nextSettings);
       setError(null);
-    } catch {
-      setError(
-        'Failed to publish premium settings. Make sure you are joined to the identity room and have permission to send state events.'
-      );
+    } catch (err) {
+      const room = mx.getRoom(identityRoomId);
+      if (room?.getMyMembership?.() !== 'join') {
+        await ensureIdentityRoomJoined();
+        try {
+          await mx.sendStateEvent(
+            identityRoomId,
+            PREMIUM_SETTINGS_EVENT_TYPE,
+            {
+              version: 1,
+              updatedAt: new Date().toISOString(),
+              updatedBy: userId || undefined,
+              ...nextSettings,
+            },
+            ''
+          );
+          savePremiumSettings(nextSettings);
+          setPremiumSettings(nextSettings);
+          setError(null);
+          return;
+        } catch (retryErr) {
+          setError(formatStateEventError(retryErr));
+        }
+      } else {
+        setError(formatStateEventError(err));
+      }
     } finally {
       setSaving(false);
     }
@@ -413,6 +475,7 @@ export function AdminPanel() {
       const draft = getDraft(request);
       const status = await updatePremiumRequestStatus({
         userId: request.userId,
+        requestId: request.id,
         plan: request.plan,
         status: 'payment_requested',
         amount: draft.amount,
@@ -458,6 +521,7 @@ export function AdminPanel() {
       await publishOverrides(next);
       const status = await updatePremiumRequestStatus({
         userId: request.userId,
+        requestId: request.id,
         plan,
         status: 'approved',
         updatedBy: userId || undefined,
@@ -476,6 +540,7 @@ export function AdminPanel() {
     try {
       const status = await updatePremiumRequestStatus({
         userId: request.userId,
+        requestId: request.id,
         plan: request.plan,
         status: 'rejected',
         updatedBy: userId || undefined,
@@ -543,8 +608,8 @@ export function AdminPanel() {
           </PageContentCenter>
         )}
         {enabled && isAllowed && adminUrl && (
-          <>
-            <div className={css.AdminGrid}>
+          <div className={css.AdminLayout}>
+            <div className={css.AdminColumn}>
             <SequenceCard
               className={css.AdminToolsCard}
               variant="SurfaceVariant"
@@ -915,10 +980,34 @@ export function AdminPanel() {
               </Box>
             </SequenceCard>
             </div>
-            <div className={css.AdminFrameWrap}>
-              <iframe className={css.AdminFrame} title="Admin Panel" src={adminUrl} />
+            <div className={css.AdminColumn}>
+              <SequenceCard
+                className={css.AdminToolsCard}
+                variant="SurfaceVariant"
+                direction="Column"
+                gap="200"
+              >
+                <Box alignItems="Center" justifyContent="SpaceBetween" gap="100">
+                  <Text size="L400">Synapse Admin</Text>
+                  <Button
+                    variant="Secondary"
+                    size="300"
+                    radii="300"
+                    onClick={handleOpenAdmin}
+                    before={<Icon src={Icons.External} size="100" />}
+                  >
+                    <Text size="B300">Open</Text>
+                  </Button>
+                </Box>
+                <Text size="T200" priority="300">
+                  Embedded admin console for user and server management.
+                </Text>
+                <div className={css.AdminFrameWrap}>
+                  <iframe className={css.AdminFrame} title="Admin Panel" src={adminUrl} />
+                </div>
+              </SequenceCard>
             </div>
-          </>
+          </div>
         )}
       </PageContent>
     </Page>

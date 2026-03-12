@@ -13,6 +13,7 @@ export const AdminContent = style({
   flexDirection: 'column',
   minHeight: 0,
   flex: 1,
+  paddingLeft: config.space.S400,
   paddingRight: config.space.S400,
   gap: config.space.S300,
   '@media': {
@@ -24,25 +25,41 @@ export const AdminContent = style({
   },
 });
 
-export const AdminGrid = style({
+export const AdminLayout = style({
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+  gridTemplateColumns: 'minmax(0, 1.35fr) minmax(0, 0.9fr)',
   gap: config.space.S300,
+  alignItems: 'start',
   '@media': {
-    'screen and (max-width: 1100px)': {
+    'screen and (max-width: 1200px)': {
       gridTemplateColumns: 'minmax(0, 1fr)',
     },
   },
 });
 
+export const AdminColumn = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: config.space.S300,
+  minWidth: 0,
+});
+
 export const AdminFrameWrap = style({
   flex: 1,
-  minHeight: 0,
+  minHeight: toRem(520),
+  height: '70vh',
+  maxHeight: toRem(900),
   borderRadius: config.radii.R400,
   overflow: 'hidden',
   backgroundColor: color.SurfaceVariant.Container,
   border: `${toRem(1)} solid ${color.SurfaceVariant.ContainerLine}`,
   boxShadow: `0 ${toRem(12)} ${toRem(32)} rgba(0, 0, 0, 0.2)`,
+  '@media': {
+    'screen and (max-width: 720px)': {
+      height: toRem(480),
+      minHeight: toRem(360),
+    },
+  },
 });
 
 export const AdminFrame = style({
@@ -54,6 +71,8 @@ export const AdminFrame = style({
 
 export const AdminToolsCard = style({
   padding: config.space.S300,
+  boxShadow: `0 ${toRem(10)} ${toRem(24)} rgba(0, 0, 0, 0.18)`,
+  border: `${toRem(1)} solid ${color.SurfaceVariant.ContainerLine}`,
 });
 
 export const AdminForm = style({
@@ -111,9 +130,12 @@ export const AdminRequestHeader = style({
 
 export const AdminRequestInputs = style({
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+  gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)',
   gap: config.space.S150,
   '@media': {
+    'screen and (max-width: 1024px)': {
+      gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+    },
     'screen and (max-width: 720px)': {
       gridTemplateColumns: 'minmax(0, 1fr)',
     },

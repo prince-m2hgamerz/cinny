@@ -209,7 +209,7 @@ export default async function handler(req, res) {
       };
       if (plan) update.plan = plan;
 
-      const result = await collection.findOneAndUpdate(
+      let result = await collection.findOneAndUpdate(
         filter,
         { $set: update },
         {
@@ -217,6 +217,14 @@ export default async function handler(req, res) {
           returnDocument: 'after',
         }
       );
+
+      if (!result?.value && userId && requestId) {
+        result = await collection.findOneAndUpdate(
+          { userId },
+          { $set: update },
+          { sort: { requestedAt: -1 }, returnDocument: 'after' }
+        );
+      }
 
       if (!result?.value) {
         sendJson(res, 404, { error: 'Request not found' });

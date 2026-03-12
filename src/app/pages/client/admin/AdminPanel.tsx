@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Icon, Icons, Input, Switch, Text, color } from 'folds';
 import {
   Page,
@@ -80,6 +80,7 @@ export function AdminPanel() {
   const [identityRoomId, setIdentityRoomId] = useState<string | null>(null);
   const [identityRoomError, setIdentityRoomError] = useState<string | null>(null);
   const [requestRows, setRequestRows] = useState<PremiumRequestRecord[]>([]);
+  const requestRowsRef = useRef<PremiumRequestRecord[]>([]);
   const [requestDrafts, setRequestDrafts] = useState<
     Record<string, { amount: string; currency: string; note: string }>
   >({});
@@ -118,6 +119,20 @@ export function AdminPanel() {
     });
   }, [requestRows]);
 
+  useEffect(() => {
+    requestRowsRef.current = requestRows;
+  }, [requestRows]);
+
+  const getLatestRequestForUser = useCallback((userIdValue: string, list: PremiumRequestRecord[]) => {
+    const filtered = list.filter((item) => item.userId === userIdValue);
+    if (filtered.length === 0) return undefined;
+    return filtered.reduce((latest, current) => {
+      const latestTime = latest.requestedAt ? new Date(latest.requestedAt).getTime() : 0;
+      const currentTime = current.requestedAt ? new Date(current.requestedAt).getTime() : 0;
+      return currentTime > latestTime ? current : latest;
+    });
+  }, []);
+
   const getDefaultAmount = useCallback(
     (plan?: PremiumPlan) => {
       if (plan === 'yearly') return premiumDefaults.yearlyPrice ?? '';
@@ -154,14 +169,17 @@ export function AdminPanel() {
     [getDefaultAmount]
   );
 
-  const refreshRequests = useCallback(async () => {
+  const refreshRequests = useCallback(async (): Promise<PremiumRequestRecord[] | null> => {
     setRequestLoading(true);
     setRequestError(null);
     try {
       const list = await fetchPremiumRequests();
       setRequestRows(list);
+      requestRowsRef.current = list;
+      return list;
     } catch (err) {
       setRequestError(err instanceof Error ? err.message : 'Unable to load requests.');
+      return null;
     } finally {
       setRequestLoading(false);
     }
@@ -485,7 +503,34 @@ export function AdminPanel() {
       });
       applyStatusToRows(status ? { ...request, ...status } : null);
     } catch (err) {
-      setRequestError(err instanceof Error ? err.message : 'Unable to request payment.');
+      const message = err instanceof Error ? err.message : 'Unable to request payment.';
+      if (message.includes('Request not found')) {
+        const list = (await refreshRequests()) ?? requestRowsRef.current;
+        const latest = getLatestRequestForUser(request.userId, list);
+        if (latest) {
+          try {
+            const draft = getDraft(latest);
+            const status = await updatePremiumRequestStatus({
+              userId: latest.userId,
+              requestId: latest.id,
+              plan: latest.plan,
+              status: 'payment_requested',
+              amount: draft.amount,
+              currency: draft.currency,
+              note: draft.note,
+              updatedBy: userId || undefined,
+            });
+            applyStatusToRows(status ? { ...latest, ...status } : null);
+            return;
+          } catch (retryErr) {
+            setRequestError(
+              retryErr instanceof Error ? retryErr.message : 'Unable to request payment.'
+            );
+            return;
+          }
+        }
+      }
+      setRequestError(message);
     } finally {
       setRequestBusyId(null);
     }
@@ -528,7 +573,28 @@ export function AdminPanel() {
       });
       applyStatusToRows(status ? { ...request, ...status } : null);
     } catch (err) {
-      setRequestError(err instanceof Error ? err.message : 'Unable to approve request.');
+      const message = err instanceof Error ? err.message : 'Unable to approve request.';
+      if (message.includes('Request not found')) {
+        const list = (await refreshRequests()) ?? requestRowsRef.current;
+        const latest = getLatestRequestForUser(request.userId, list);
+        if (latest) {
+          try {
+            const status = await updatePremiumRequestStatus({
+              userId: latest.userId,
+              requestId: latest.id,
+              plan: latest.plan ?? plan,
+              status: 'approved',
+              updatedBy: userId || undefined,
+            });
+            applyStatusToRows(status ? { ...latest, ...status } : null);
+            return;
+          } catch (retryErr) {
+            setRequestError(retryErr instanceof Error ? retryErr.message : 'Unable to approve.');
+            return;
+          }
+        }
+      }
+      setRequestError(message);
     } finally {
       setRequestBusyId(null);
     }
@@ -547,7 +613,28 @@ export function AdminPanel() {
       });
       applyStatusToRows(status ? { ...request, ...status } : null);
     } catch (err) {
-      setRequestError(err instanceof Error ? err.message : 'Unable to reject request.');
+      const message = err instanceof Error ? err.message : 'Unable to reject request.';
+      if (message.includes('Request not found')) {
+        const list = (await refreshRequests()) ?? requestRowsRef.current;
+        const latest = getLatestRequestForUser(request.userId, list);
+        if (latest) {
+          try {
+            const status = await updatePremiumRequestStatus({
+              userId: latest.userId,
+              requestId: latest.id,
+              plan: latest.plan,
+              status: 'rejected',
+              updatedBy: userId || undefined,
+            });
+            applyStatusToRows(status ? { ...latest, ...status } : null);
+            return;
+          } catch (retryErr) {
+            setRequestError(retryErr instanceof Error ? retryErr.message : 'Unable to reject.');
+            return;
+          }
+        }
+      }
+      setRequestError(message);
     } finally {
       setRequestBusyId(null);
     }
@@ -609,9 +696,9 @@ export function AdminPanel() {
         )}
         {enabled && isAllowed && adminUrl && (
           <div className={css.AdminLayout}>
-            <div className={css.AdminColumn}>
+            <div className={css.AdminMain}>
             <SequenceCard
-              className={css.AdminToolsCard}
+              className={`${css.AdminToolsCard} ${css.AdminCardBadges}`}
               variant="SurfaceVariant"
               direction="Column"
               gap="300"
@@ -755,7 +842,7 @@ export function AdminPanel() {
               </Box>
             </SequenceCard>
             <SequenceCard
-              className={css.AdminToolsCard}
+              className={`${css.AdminToolsCard} ${css.AdminCardSettings}`}
               variant="SurfaceVariant"
               direction="Column"
               gap="300"
@@ -818,7 +905,7 @@ export function AdminPanel() {
               </Box>
             </SequenceCard>
             <SequenceCard
-              className={css.AdminToolsCard}
+              className={`${css.AdminToolsCard} ${css.AdminCardRequests}`}
               variant="SurfaceVariant"
               direction="Column"
               gap="300"
@@ -980,7 +1067,7 @@ export function AdminPanel() {
               </Box>
             </SequenceCard>
             </div>
-            <div className={css.AdminColumn}>
+            <div className={`${css.AdminAside} ${css.AdminColumnSticky}`}>
               <SequenceCard
                 className={css.AdminToolsCard}
                 variant="SurfaceVariant"

@@ -226,6 +226,28 @@ export default async function handler(req, res) {
         );
       }
 
+      if (!result?.value && userId) {
+        const now = new Date().toISOString();
+        const insertDoc = {
+          userId,
+          plan: plan || 'monthly',
+          status,
+          amount,
+          currency,
+          note,
+          requestedAt: now,
+          requestedBy: updatedBy || userId,
+          updatedAt: now,
+          updatedBy: updatedBy || userId,
+        };
+        const insertResult = await collection.insertOne(insertDoc);
+        sendJson(res, 200, {
+          ok: true,
+          status: toStatus({ ...insertDoc, _id: insertResult.insertedId }),
+        });
+        return;
+      }
+
       if (!result?.value) {
         sendJson(res, 404, { error: 'Request not found' });
         return;

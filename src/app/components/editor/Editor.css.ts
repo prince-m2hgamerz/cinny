@@ -4,18 +4,23 @@ import { color, config, DefaultReset, toRem } from 'folds';
 export const Editor = style([
   DefaultReset,
   {
-    backgroundColor: color.SurfaceVariant.Container,
+    backgroundColor: color.Surface.Container,
     color: color.SurfaceVariant.OnContainer,
     boxShadow: `inset 0 0 0 ${config.borderWidth.B300} ${color.SurfaceVariant.ContainerLine}`,
-    borderRadius: config.radii.R400,
+    borderRadius: config.radii.R500,
     overflow: 'hidden',
+    selectors: {
+      '&:focus-within': {
+        boxShadow: `0 0 0 ${config.borderWidth.B400} ${color.Primary.Main}`,
+      },
+    },
   },
 ]);
 
 export const EditorOptions = style([
   DefaultReset,
   {
-    padding: config.space.S200,
+    padding: config.space.S150,
   },
 ]);
 
@@ -26,13 +31,13 @@ export const EditorTextarea = style([
   {
     flexGrow: 1,
     height: '100%',
-    padding: `${toRem(13)} ${toRem(1)}`,
+    padding: `${toRem(10)} ${toRem(8)}`,
     selectors: {
       [`${EditorTextareaScroll}:first-child &`]: {
-        paddingLeft: toRem(13),
+        paddingLeft: toRem(14),
       },
       [`${EditorTextareaScroll}:last-child &`]: {
-        paddingRight: toRem(13),
+        paddingRight: toRem(14),
       },
       '&:focus': {
         outline: 'none',
@@ -54,7 +59,7 @@ export const EditorPlaceholderTextVisual = style([
   DefaultReset,
   {
     display: 'block',
-    paddingTop: toRem(13),
+    paddingTop: toRem(11),
     paddingLeft: toRem(1),
   },
 ]);

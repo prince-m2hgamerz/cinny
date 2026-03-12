@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type { IconName } from 'folds';
 
 export type HashRouterConfig = {
   enabled?: boolean;
@@ -13,6 +14,28 @@ export type UserIdentityConfig = {
   tag?: string;
   tagTone?: UserIdentityTagTone;
   badgeTitle?: string;
+  premium?: boolean;
+  premiumPlan?: PremiumPlan;
+  premiumUntil?: string;
+  premiumSince?: string;
+};
+
+export type PremiumPlan = 'monthly' | 'yearly' | 'lifetime' | 'trial';
+
+export type PremiumFeatureConfig = {
+  key: string;
+  title: string;
+  description?: string;
+  icon?: IconName;
+};
+
+export type PremiumConfig = {
+  enabled?: boolean;
+  monthlyPrice?: string;
+  yearlyPrice?: string;
+  yearlyDiscount?: string;
+  features?: PremiumFeatureConfig[];
+  identityRoom?: string;
 };
 
 export type AdminPanelConfig = {
@@ -37,6 +60,7 @@ export type ClientConfig = {
   hashRouter?: HashRouterConfig;
   userIdentities?: UserIdentityConfig[];
   adminPanel?: AdminPanelConfig;
+  premium?: PremiumConfig;
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

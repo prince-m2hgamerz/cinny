@@ -36,6 +36,7 @@ export interface Settings {
 
   showNotifications: boolean;
   isNotificationSounds: boolean;
+  showSponsoredMessages: boolean;
 
   hour24Clock: boolean;
   dateFormatString: string;
@@ -45,7 +46,7 @@ export interface Settings {
 
 const defaultSettings: Settings = {
   themeId: undefined,
-  useSystemTheme: true,
+  useSystemTheme: false,
   lightThemeId: undefined,
   darkThemeId: undefined,
   monochromeMode: false,
@@ -58,7 +59,7 @@ const defaultSettings: Settings = {
   isPeopleDrawer: true,
   memberSortFilterIndex: 0,
   enterForNewline: false,
-  messageLayout: 0,
+  messageLayout: MessageLayout.Bubble,
   messageSpacing: '400',
   hideMembershipEvents: false,
   hideNickAvatarEvents: true,
@@ -70,6 +71,7 @@ const defaultSettings: Settings = {
 
   showNotifications: true,
   isNotificationSounds: true,
+  showSponsoredMessages: true,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',

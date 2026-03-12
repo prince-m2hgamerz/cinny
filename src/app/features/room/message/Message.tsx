@@ -671,6 +671,7 @@ export const Message = as<'div', MessageProps>(
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const senderId = mEvent.getSender() ?? '';
+    const isOwn = senderId === mx.getUserId();
 
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -698,6 +699,11 @@ export const Message = as<'div', MessageProps>(
         justifyContent="SpaceBetween"
         alignItems="Baseline"
         grow="Yes"
+        style={
+          messageLayout === MessageLayout.Bubble && isOwn
+            ? { justifyContent: 'flex-end' }
+            : undefined
+        }
       >
         <Box alignItems="Center" gap="200">
           <Username
@@ -835,6 +841,7 @@ export const Message = as<'div', MessageProps>(
         collapse={collapse}
         highlight={highlight}
         selected={!!menuAnchor || !!emojiBoardAnchor}
+        own={messageLayout === MessageLayout.Bubble && isOwn}
         {...props}
         {...hoverProps}
         {...focusWithinProps}
@@ -1086,7 +1093,12 @@ export const Message = as<'div', MessageProps>(
           </CompactLayout>
         )}
         {messageLayout === MessageLayout.Bubble && (
-          <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
+          <BubbleLayout
+            before={isOwn ? undefined : avatarJSX}
+            header={headerJSX}
+            align={isOwn ? 'End' : 'Start'}
+            onContextMenu={handleContextMenu}
+          >
             {msgContentJSX}
           </BubbleLayout>
         )}

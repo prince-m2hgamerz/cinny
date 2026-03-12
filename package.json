@@ -1,5 +1,5 @@
 {
-  "name": "cinny",
+  "name": "vchat",
   "version": "4.10.5",
   "description": "Yet another matrix client",
   "main": "index.js",
@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
-  "author": "Ajay Bura",
+  "author": "Prince - M2H",
   "license": "AGPL-3.0-only",
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "1.1.6",
@@ -58,6 +58,7 @@
     "matrix-js-sdk": "38.2.0",
     "matrix-widget-api": "1.13.0",
     "millify": "6.1.0",
+    "mongodb": "6.6.2",
     "pdfjs-dist": "4.2.67",
     "prismjs": "1.30.0",
     "react": "18.2.0",

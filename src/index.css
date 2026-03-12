@@ -6,7 +6,7 @@
 }
 
 :root {
-  --tc-link: hsl(213deg 100% 45%);
+  --tc-link: #2a7de1;
 
   /* user mxid colors */
   --mx-uc-1: hsl(208, 100%, 45%);
@@ -19,7 +19,8 @@
   --mx-uc-8: hsl(94, 100%, 35%);
 
   --font-emoji: 'Twemoji_DISABLED';
-  --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
+  --font-secondary: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    'InterVariable', 'Segoe UI', Arial, sans-serif;
 }
 
 .dark-theme,
@@ -35,7 +36,8 @@
   --mx-uc-7: hsl(243, 100%, 80%);
   --mx-uc-8: hsl(94, 100%, 80%);
 
-  --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
+  --font-secondary: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    'InterVariable', 'Segoe UI', Arial, sans-serif;
 }
 
 html {

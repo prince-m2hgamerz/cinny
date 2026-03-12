@@ -1,5 +1,7 @@
 import React, { ReactNode } from 'react';
+import classNames from 'classnames';
 import { Box } from 'folds';
+import * as css from './ClientLayout.css';
 
 type ClientLayoutProps = {
   nav: ReactNode;
@@ -7,9 +9,11 @@ type ClientLayoutProps = {
 };
 export function ClientLayout({ nav, children }: ClientLayoutProps) {
   return (
-    <Box grow="Yes">
+    <Box grow="Yes" className={css.ClientLayoutRoot}>
       <Box shrink="No">{nav}</Box>
-      <Box grow="Yes">{children}</Box>
+      <Box grow="Yes" className={classNames(css.ClientLayoutBody)}>
+        {children}
+      </Box>
     </Box>
   );
 }

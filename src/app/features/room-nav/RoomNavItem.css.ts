@@ -3,25 +3,38 @@ import { color, config, toRem } from 'folds';
 
 export const DirectNavItem = style({
   minHeight: toRem(72),
-  borderRadius: 0,
-  border: 'none',
-  boxShadow: `inset 0 -1px 0 ${color.SurfaceVariant.ContainerLine}`,
+  borderRadius: config.radii.R400,
+  border: `${config.borderWidth.B300} solid transparent`,
   backgroundColor: 'transparent',
+  boxShadow: `inset 0 -1px 0 ${color.SurfaceVariant.ContainerLine}`,
+  margin: `${config.space.S50} ${config.space.S200}`,
+  transition: 'background-color 160ms ease, box-shadow 160ms ease, border-color 160ms ease',
   '@media': {
     'screen and (min-width: 721px)': {
-      minHeight: toRem(88),
+      minHeight: toRem(84),
+      margin: `${config.space.S100} ${config.space.S300}`,
+    },
+    'screen and (max-width: 720px)': {
+      minHeight: toRem(78),
+      borderRadius: config.radii.R400,
+      margin: `${config.space.S50} ${config.space.S150}`,
+      backgroundColor: 'transparent',
+      boxShadow: `inset 0 -1px 0 ${color.SurfaceVariant.ContainerLine}`,
     },
   },
   selectors: {
     '&[aria-selected=true]': {
       backgroundColor: color.SurfaceVariant.Container,
+      borderColor: color.SurfaceVariant.ContainerLine,
       boxShadow: `inset ${toRem(3)} 0 0 ${color.Primary.Main}, inset 0 -1px 0 ${color.SurfaceVariant.ContainerLine}`,
     },
     '&:hover, &:focus-visible': {
       backgroundColor: color.SurfaceVariant.ContainerHover,
+      borderColor: color.SurfaceVariant.ContainerLine,
     },
     '&[data-hover=true]': {
       backgroundColor: color.SurfaceVariant.ContainerHover,
+      borderColor: color.SurfaceVariant.ContainerLine,
     },
   },
 });
@@ -34,12 +47,14 @@ export const DirectNavContent = style({
   alignItems: 'stretch',
   '@media': {
     'screen and (max-width: 720px)': {
-      paddingLeft: config.space.S250,
-      paddingRight: config.space.S250,
+      paddingLeft: config.space.S300,
+      paddingRight: config.space.S300,
     },
     'screen and (min-width: 721px)': {
       paddingLeft: config.space.S400,
       paddingRight: config.space.S400,
+      paddingTop: config.space.S250,
+      paddingBottom: config.space.S250,
     },
   },
 });
@@ -47,13 +62,13 @@ export const DirectNavContent = style({
 export const DirectRow = style({
   width: '100%',
   display: 'grid',
-  gridTemplateColumns: `${toRem(48)} minmax(0, 1fr)`,
+  gridTemplateColumns: `${toRem(52)} minmax(0, 1fr)`,
   gap: config.space.S200,
   alignItems: 'center',
   minWidth: 0,
   '@media': {
     'screen and (min-width: 721px)': {
-      gridTemplateColumns: `${toRem(52)} minmax(0, 1fr)`,
+      gridTemplateColumns: `${toRem(56)} minmax(0, 1fr)`,
       gap: config.space.S300,
     },
   },
@@ -120,11 +135,12 @@ export const DirectNameText = style({
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  lineHeight: 1.2,
+  lineHeight: 1.25,
+  fontWeight: config.fontWeight.W600,
   '@media': {
     'screen and (min-width: 721px)': {
-      fontSize: toRem(14),
-      letterSpacing: '0.01em',
+      fontSize: toRem(15),
+      letterSpacing: '0.005em',
     },
   },
 });
@@ -135,10 +151,11 @@ export const DirectTime = style({
   whiteSpace: 'nowrap',
   justifySelf: 'end',
   marginLeft: config.space.S100,
+  opacity: 0.8,
   '@media': {
     'screen and (min-width: 721px)': {
-      fontSize: toRem(11.5),
-      letterSpacing: '0.02em',
+      fontSize: toRem(12),
+      letterSpacing: '0.01em',
     },
   },
 });
@@ -147,9 +164,10 @@ export const DirectPreview = style({
   color: color.SurfaceVariant.OnContainer,
   fontSize: toRem(13),
   lineHeight: 1.25,
+  opacity: 0.68,
   '@media': {
     'screen and (min-width: 721px)': {
-      fontSize: toRem(12.5),
+      fontSize: toRem(13),
     },
   },
 });

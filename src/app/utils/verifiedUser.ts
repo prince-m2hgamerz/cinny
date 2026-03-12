@@ -1,5 +1,9 @@
 import { Room } from 'matrix-js-sdk';
-import type { UserIdentityConfig, UserIdentityTagTone } from '../hooks/useClientConfig';
+import type {
+  PremiumPlan,
+  UserIdentityConfig,
+  UserIdentityTagTone,
+} from '../hooks/useClientConfig';
 import { guessDmRoomUserId } from './matrix';
 
 export type UserIdentityMeta = {
@@ -7,6 +11,10 @@ export type UserIdentityMeta = {
   tag?: string;
   tagTone?: UserIdentityTagTone;
   badgeTitle?: string;
+  premium?: boolean;
+  premiumPlan?: PremiumPlan;
+  premiumUntil?: string;
+  premiumSince?: string;
 };
 
 export const USER_IDENTITIES_EVENT_TYPE = 'org.vchat.user_identities';
@@ -54,18 +62,37 @@ const isTagTone = (value: unknown): value is UserIdentityTagTone =>
   value === 'gold' ||
   value === 'gray';
 
+const isPremiumPlan = (value: unknown): value is PremiumPlan =>
+  value === 'monthly' || value === 'yearly' || value === 'lifetime' || value === 'trial';
+
+const normalizeDateString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const parsed = Date.parse(trimmed);
+  if (Number.isNaN(parsed)) return undefined;
+  return new Date(parsed).toISOString();
+};
+
 const normalizeMeta = (meta: UserIdentityMeta): UserIdentityMeta => {
   const tag = typeof meta.tag === 'string' && meta.tag.trim() ? meta.tag.trim() : undefined;
   const badgeTitle =
     typeof meta.badgeTitle === 'string' && meta.badgeTitle.trim()
       ? meta.badgeTitle.trim()
       : undefined;
+  const premiumUntil = normalizeDateString(meta.premiumUntil);
+  const premiumSince = normalizeDateString(meta.premiumSince);
+  const premium = meta.premium ?? Boolean(premiumUntil);
 
   return {
     verified: meta.verified ?? true,
     tag,
     tagTone: meta.tagTone ?? 'critical',
     badgeTitle,
+    premium,
+    premiumPlan: isPremiumPlan(meta.premiumPlan) ? meta.premiumPlan : undefined,
+    premiumUntil,
+    premiumSince,
   };
 };
 
@@ -80,6 +107,10 @@ export const normalizeIdentityConfig = (
   const badgeTitle =
     typeof identity.badgeTitle === 'string' ? identity.badgeTitle.trim() : undefined;
   const tagTone = isTagTone(identity.tagTone) ? identity.tagTone : 'critical';
+  const premiumUntil = normalizeDateString(identity.premiumUntil);
+  const premiumSince = normalizeDateString(identity.premiumSince);
+  const premium = identity.premium ?? Boolean(premiumUntil);
+  const premiumPlan = isPremiumPlan(identity.premiumPlan) ? identity.premiumPlan : undefined;
 
   return {
     userId,
@@ -87,6 +118,10 @@ export const normalizeIdentityConfig = (
     tag,
     tagTone,
     badgeTitle,
+    premium,
+    premiumPlan,
+    premiumUntil,
+    premiumSince,
   };
 };
 
@@ -171,6 +206,16 @@ export const isVerifiedUser = (
   userId: string | null | undefined,
   identityMap: Record<string, UserIdentityMeta> = DEFAULT_USER_IDENTITIES
 ): boolean => !!getUserIdentityMeta(userId, identityMap)?.verified;
+
+export const isPremiumActive = (
+  meta: UserIdentityMeta | null | undefined
+): boolean => {
+  if (!meta?.premium) return false;
+  if (!meta.premiumUntil) return true;
+  const parsed = Date.parse(meta.premiumUntil);
+  if (Number.isNaN(parsed)) return true;
+  return parsed > Date.now();
+};
 
 export const getDirectRoomTargetUserId = (
   room: Room,

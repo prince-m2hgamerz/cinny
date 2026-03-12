@@ -27,6 +27,7 @@ import {
   Text,
   toRem,
 } from 'folds';
+import { useSetAtom } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
 import { Page, PageContent, PageHeader } from '../../../components/page';
@@ -36,6 +37,9 @@ import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '../../.
 import { SettingTile } from '../../../components/setting-tile';
 import { KeySymbol } from '../../../utils/key-symbol';
 import { isMacOS } from '../../../utils/user-agent';
+import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { usePremiumStatus } from '../../../hooks/usePremium';
+import { premiumModalAtom } from '../../../state/premium';
 import {
   DarkTheme,
   LightTheme,
@@ -741,6 +745,89 @@ function Editor() {
   );
 }
 
+function PremiumControls() {
+  const mx = useMatrixClient();
+  const userId = mx.getUserId();
+  const premium = usePremiumStatus(userId);
+  const setPremiumModal = useSetAtom(premiumModalAtom);
+  const [showSponsoredMessages, setShowSponsoredMessages] = useSetting(
+    settingsAtom,
+    'showSponsoredMessages'
+  );
+
+  const openPremium = () => setPremiumModal({ open: true, feature: 'premium-controls' });
+  const unlockButton = (
+    <Button
+      size="300"
+      variant="Secondary"
+      radii="Pill"
+      onClick={openPremium}
+      before={<Icon src={Icons.Lock} size="100" />}
+    >
+      <Text size="B300">Unlock</Text>
+    </Button>
+  );
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Premium</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Sponsored messages"
+          description="Hide sponsored messages and ads."
+          after={
+            premium.active ? (
+              <Switch
+                variant="Primary"
+                value={showSponsoredMessages}
+                onChange={setShowSponsoredMessages}
+              />
+            ) : (
+              unlockButton
+            )
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Pinned chats"
+          description={
+            premium.active
+              ? 'Premium pinned chat limit enabled.'
+              : 'Premium unlocks more pinned chats.'
+          }
+          after={
+            premium.active ? (
+              <Chip variant="Success" radii="Pill">
+                <Text size="B300">Premium</Text>
+              </Chip>
+            ) : (
+              unlockButton
+            )
+          }
+        />
+        <SettingTile
+          title="Chat folders"
+          description={
+            premium.active
+              ? 'Premium folders are available for organizing chats.'
+              : 'Organize chats with premium folders.'
+          }
+          after={
+            premium.active ? (
+              <Chip variant="Success" radii="Pill">
+                <Text size="B300">Premium</Text>
+              </Chip>
+            ) : (
+              unlockButton
+            )
+          }
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
 function SelectMessageLayout() {
   const [menuCords, setMenuCords] = useState<RectCords>();
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
@@ -1005,6 +1092,7 @@ export function General({ requestClose }: GeneralProps) {
               <Appearance />
               <DateAndTime />
               <Editor />
+              <PremiumControls />
               <Messages />
             </Box>
           </PageContent>

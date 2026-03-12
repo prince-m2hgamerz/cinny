@@ -84,8 +84,10 @@ export const MessageBase = recipe({
     DefaultReset,
     {
       marginTop: SpacingVar,
-      padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
-      borderRadius: `0 ${config.radii.R400} ${config.radii.R400} 0`,
+      padding: `${config.space.S100} ${config.space.S300}`,
+      borderRadius: config.radii.R400,
+      display: 'flex',
+      flexDirection: 'column',
     },
   ],
   variants: {
@@ -100,6 +102,11 @@ export const MessageBase = recipe({
     },
     highlight: HighlightVariant,
     selected: SelectedVariant,
+    own: {
+      true: {
+        alignItems: 'flex-end',
+      },
+    },
   },
   defaultVariants: {
     space: '400',
@@ -138,17 +145,40 @@ export const BubbleBefore = style({
   minWidth: toRem(36),
 });
 
+export const BubbleBeforeHidden = style({
+  minWidth: 0,
+  width: 0,
+  display: 'none',
+});
+
+export const BubbleRow = style({
+  alignItems: 'flex-start',
+});
+
+export const BubbleRowEnd = style({
+  flexDirection: 'row-reverse',
+  justifyContent: 'flex-end',
+});
+
 export const BubbleContent = style({
   maxWidth: toRem(800),
-  padding: config.space.S200,
-  backgroundColor: color.SurfaceVariant.Container,
-  color: color.SurfaceVariant.OnContainer,
-  borderRadius: config.radii.R500,
+  padding: `${config.space.S200} ${config.space.S300}`,
+  backgroundColor: color.Surface.Container,
+  color: color.Surface.OnContainer,
+  borderRadius: toRem(18),
+  boxShadow: config.shadow.E100,
+  border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
   position: 'relative',
 });
 
 export const BubbleContentArrowLeft = style({
   borderTopLeftRadius: 0,
+});
+
+export const BubbleContentOwn = style({
+  backgroundColor: color.Primary.Container,
+  color: color.Primary.OnContainer,
+  borderColor: color.Primary.ContainerLine,
 });
 
 export const BubbleLeftArrow = style({

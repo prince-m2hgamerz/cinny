@@ -5,6 +5,7 @@ import { MatrixId } from './MatrixId';
 import { Profile } from './Profile';
 import { ContactInformation } from './ContactInfo';
 import { IgnoredUserList } from './IgnoredUserList';
+import { PremiumBanner } from '../../../components/PremiumBanner';
 
 type AccountProps = {
   requestClose: () => void;
@@ -30,6 +31,7 @@ export function Account({ requestClose }: AccountProps) {
         <Scroll hideTrack visibility="Hover">
           <PageContent>
             <Box direction="Column" gap="700">
+              <PremiumBanner />
               <Profile />
               <MatrixId />
               <ContactInformation />

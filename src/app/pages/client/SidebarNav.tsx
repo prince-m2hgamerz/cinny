@@ -13,6 +13,7 @@ import {
   SpaceTabs,
   InboxTab,
   ExploreTab,
+  PremiumTab,
   SettingsTab,
   UnverifiedTab,
   SearchTab,
@@ -36,6 +37,7 @@ export function SidebarNav() {
             <SidebarStackSeparator />
             <SidebarStack>
               <ExploreTab />
+              <PremiumTab />
               <CreateTab />
             </SidebarStack>
           </Scroll>

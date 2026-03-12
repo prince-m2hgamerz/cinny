@@ -22,6 +22,7 @@ import { useSetting } from '../../state/hooks/settings';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoom } from '../../hooks/useRoom';
+import * as css from './RoomView.css';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
@@ -91,7 +92,7 @@ export function RoomView({ eventId }: { eventId?: string }) {
   );
 
   return (
-    <Page ref={roomViewRef}>
+    <Page ref={roomViewRef} className={css.RoomViewRoot}>
       <Box grow="Yes" direction="Column">
         <RoomTimeline
           key={roomId}

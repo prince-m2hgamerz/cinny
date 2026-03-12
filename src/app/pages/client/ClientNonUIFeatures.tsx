@@ -30,11 +30,26 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 import { userIdentityOverridesAtom } from '../../state/userIdentities';
 import {
+  premiumRequestInboxAtom,
+  premiumRequestStatusAtom,
+  premiumSettingsAtom,
+} from '../../state/premium';
+import {
   extractUserIdentityListFromContent,
   loadUserIdentityOverrides,
   saveUserIdentityOverrides,
   USER_IDENTITIES_EVENT_TYPE,
 } from '../../utils/verifiedUser';
+import {
+  loadPremiumSettings,
+  normalizePremiumRequest,
+  normalizePremiumRequestStatus,
+  normalizePremiumSettings,
+  PREMIUM_REQUEST_EVENT_TYPE,
+  PREMIUM_REQUEST_STATUS_EVENT_TYPE,
+  PREMIUM_SETTINGS_EVENT_TYPE,
+  savePremiumSettings,
+} from '../../utils/premium';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -338,6 +353,210 @@ function UserIdentitySync() {
   return null;
 }
 
+function PremiumSettingsSync() {
+  const mx = useMatrixClient();
+  const { adminPanel, premium } = useClientConfig();
+  const setPremiumSettings = useSetAtom(premiumSettingsAtom);
+  const identityRoomRef =
+    premium?.identityRoom?.trim() ??
+    adminPanel?.identityRoom?.trim() ??
+    '#vchat:vgram.m2hio.in';
+  const [identityRoomId, setIdentityRoomId] = useState<string | null>(null);
+  const identityRoomIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setPremiumSettings(loadPremiumSettings());
+  }, [setPremiumSettings]);
+
+  useEffect(() => {
+    identityRoomIdRef.current = identityRoomId;
+  }, [identityRoomId]);
+
+  useEffect(() => {
+    let active = true;
+    const resolveRoomId = async () => {
+      if (!identityRoomRef) {
+        if (active) setIdentityRoomId(null);
+        return;
+      }
+      if (identityRoomRef.startsWith('!')) {
+        if (active) setIdentityRoomId(identityRoomRef);
+        return;
+      }
+      if (!identityRoomRef.startsWith('#')) {
+        if (active) setIdentityRoomId(null);
+        return;
+      }
+      try {
+        const result = await mx.getRoomIdForAlias(identityRoomRef);
+        if (active) setIdentityRoomId(result.room_id);
+      } catch {
+        if (active) setIdentityRoomId(null);
+      }
+    };
+    resolveRoomId();
+    return () => {
+      active = false;
+    };
+  }, [identityRoomRef, mx]);
+
+  const applySettings = useCallback(
+    (event: MatrixEvent) => {
+      const normalized = normalizePremiumSettings(event.getContent());
+      if (!normalized) return;
+      setPremiumSettings(normalized);
+      savePremiumSettings(normalized);
+    },
+    [setPremiumSettings]
+  );
+
+  useEffect(() => {
+    if (!identityRoomId) return;
+    const room = mx.getRoom(identityRoomId);
+    const stateEvent = room?.currentState.getStateEvents(PREMIUM_SETTINGS_EVENT_TYPE, '');
+    if (stateEvent) applySettings(stateEvent);
+  }, [applySettings, identityRoomId, mx]);
+
+  const handleStateEvent = useCallback(
+    (event: MatrixEvent) => {
+      if (event.getType() !== PREMIUM_SETTINGS_EVENT_TYPE) return;
+      if (!identityRoomIdRef.current) return;
+      if (event.getRoomId() !== identityRoomIdRef.current) return;
+      applySettings(event);
+    },
+    [applySettings]
+  );
+
+  useStateEventCallback(mx, handleStateEvent);
+
+  return null;
+}
+
+function PremiumRequestSync() {
+  const mx = useMatrixClient();
+  const { adminPanel, premium } = useClientConfig();
+  const setStatusMap = useSetAtom(premiumRequestStatusAtom);
+  const setInbox = useSetAtom(premiumRequestInboxAtom);
+  const identityRoomRef =
+    premium?.identityRoom?.trim() ??
+    adminPanel?.identityRoom?.trim() ??
+    '#vchat:vgram.m2hio.in';
+  const [identityRoomId, setIdentityRoomId] = useState<string | null>(null);
+  const identityRoomIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    identityRoomIdRef.current = identityRoomId;
+  }, [identityRoomId]);
+
+  useEffect(() => {
+    let active = true;
+    const resolveRoomId = async () => {
+      if (!identityRoomRef) {
+        if (active) setIdentityRoomId(null);
+        return;
+      }
+      if (identityRoomRef.startsWith('!')) {
+        if (active) setIdentityRoomId(identityRoomRef);
+        return;
+      }
+      if (!identityRoomRef.startsWith('#')) {
+        if (active) setIdentityRoomId(null);
+        return;
+      }
+      try {
+        const result = await mx.getRoomIdForAlias(identityRoomRef);
+        if (active) setIdentityRoomId(result.room_id);
+      } catch {
+        if (active) setIdentityRoomId(null);
+      }
+    };
+    resolveRoomId();
+    return () => {
+      active = false;
+    };
+  }, [identityRoomRef, mx]);
+
+  useEffect(() => {
+    if (!identityRoomId) return;
+    const room = mx.getRoom(identityRoomId);
+    const stateEvents = room?.currentState.getStateEvents(PREMIUM_REQUEST_STATUS_EVENT_TYPE);
+    if (!stateEvents) return;
+    const events = Array.isArray(stateEvents) ? stateEvents : [stateEvents];
+    const nextMap: Record<string, NonNullable<ReturnType<typeof normalizePremiumRequestStatus>>> =
+      {};
+    events.forEach((event) => {
+      const status = normalizePremiumRequestStatus(event.getContent(), event.getStateKey());
+      if (status) nextMap[status.userId] = status;
+    });
+    setStatusMap(nextMap);
+
+    const timelineEvents = room.getLiveTimeline().getEvents();
+    if (timelineEvents.length > 0) {
+      setInbox((current) => {
+        const known = new Set(current.map((item) => item.eventId));
+        const next = [...current];
+        timelineEvents.forEach((event) => {
+          if (event.getType() !== PREMIUM_REQUEST_EVENT_TYPE) return;
+          const request = normalizePremiumRequest(
+            event.getContent(),
+            event.getSender() ?? undefined,
+            event.getId() ?? undefined
+          );
+          if (!request || (request.eventId && known.has(request.eventId))) return;
+          next.unshift(request);
+        });
+        return next.slice(0, 100);
+      });
+    }
+  }, [identityRoomId, mx, setInbox, setStatusMap]);
+
+  const handleStatusEvent = useCallback(
+    (event: MatrixEvent) => {
+      if (event.getType() !== PREMIUM_REQUEST_STATUS_EVENT_TYPE) return;
+      if (!identityRoomIdRef.current) return;
+      if (event.getRoomId() !== identityRoomIdRef.current) return;
+      const status = normalizePremiumRequestStatus(event.getContent(), event.getStateKey());
+      if (!status) return;
+      setStatusMap((current) => ({ ...current, [status.userId]: status }));
+    },
+    [setStatusMap]
+  );
+
+  useStateEventCallback(mx, handleStatusEvent);
+
+  useEffect(() => {
+    const handleTimelineEvent: RoomEventHandlerMap[RoomEvent.Timeline] = (
+      event,
+      room,
+      toStartOfTimeline,
+      removed,
+      data
+    ) => {
+      if (!data.liveEvent) return;
+      if (event.getType() !== PREMIUM_REQUEST_EVENT_TYPE) return;
+      if (!identityRoomIdRef.current || event.getRoomId() !== identityRoomIdRef.current) return;
+      const request = normalizePremiumRequest(
+        event.getContent(),
+        event.getSender() ?? undefined,
+        event.getId() ?? undefined
+      );
+      if (!request) return;
+      setInbox((current) => {
+        if (request.eventId && current.some((item) => item.eventId === request.eventId)) {
+          return current;
+        }
+        return [request, ...current].slice(0, 100);
+      });
+    };
+    mx.on(RoomEvent.Timeline, handleTimelineEvent);
+    return () => {
+      mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+    };
+  }, [mx, setInbox]);
+
+  return null;
+}
+
 type ClientNonUIFeaturesProps = {
   children: ReactNode;
 };
@@ -351,6 +570,8 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <InviteNotifications />
       <MessageNotifications />
       <UserIdentitySync />
+      <PremiumSettingsSync />
+      <PremiumRequestSync />
       {children}
     </>
   );

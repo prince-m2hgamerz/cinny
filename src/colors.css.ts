@@ -1,6 +1,103 @@
 import { createTheme } from '@vanilla-extract/css';
 import { color } from 'folds';
 
+export const telegramLightTheme = createTheme(color, {
+  Background: {
+    Container: '#F3F5F7',
+    ContainerHover: '#E9EDF2',
+    ContainerActive: '#E1E6EE',
+    ContainerLine: '#D5DCE6',
+    OnContainer: '#0E1A2B',
+  },
+
+  Surface: {
+    Container: '#FFFFFF',
+    ContainerHover: '#F6F8FB',
+    ContainerActive: '#EEF2F7',
+    ContainerLine: '#E1E7EF',
+    OnContainer: '#0E1A2B',
+  },
+
+  SurfaceVariant: {
+    Container: '#F5F7FA',
+    ContainerHover: '#EEF2F7',
+    ContainerActive: '#E5EBF3',
+    ContainerLine: '#D5DCE6',
+    OnContainer: '#5B6472',
+  },
+
+  Primary: {
+    Main: '#2A7DE1',
+    MainHover: '#2371CE',
+    MainActive: '#1F68C0',
+    MainLine: '#1C5EB0',
+    OnMain: '#FFFFFF',
+    Container: '#D9ECFF',
+    ContainerHover: '#CCE5FF',
+    ContainerActive: '#BFDFFF',
+    ContainerLine: '#B2D8FF',
+    OnContainer: '#1C5EBF',
+  },
+
+  Secondary: {
+    Main: '#111827',
+    MainHover: '#1F2937',
+    MainActive: '#111827',
+    MainLine: '#0B0F19',
+    OnMain: '#FFFFFF',
+    Container: '#E7EBF1',
+    ContainerHover: '#DEE4EC',
+    ContainerActive: '#D6DDE7',
+    ContainerLine: '#C9D1DD',
+    OnContainer: '#1F2937',
+  },
+
+  Success: {
+    Main: '#34C759',
+    MainHover: '#2FB352',
+    MainActive: '#2AA44B',
+    MainLine: '#259544',
+    OnMain: '#FFFFFF',
+    Container: '#E6F7EC',
+    ContainerHover: '#D9F3E3',
+    ContainerActive: '#CDEFD9',
+    ContainerLine: '#C1EBCD',
+    OnContainer: '#1C7A37',
+  },
+
+  Warning: {
+    Main: '#FF9F0A',
+    MainHover: '#F28F00',
+    MainActive: '#E68400',
+    MainLine: '#D97B00',
+    OnMain: '#FFFFFF',
+    Container: '#FFF1D9',
+    ContainerHover: '#FFE8C2',
+    ContainerActive: '#FFE0AD',
+    ContainerLine: '#FFD692',
+    OnContainer: '#8A5200',
+  },
+
+  Critical: {
+    Main: '#FF3B30',
+    MainHover: '#F23329',
+    MainActive: '#E62E24',
+    MainLine: '#D92920',
+    OnMain: '#FFFFFF',
+    Container: '#FFE3E1',
+    ContainerHover: '#FFD7D4',
+    ContainerActive: '#FFCBC7',
+    ContainerLine: '#FFBDB8',
+    OnContainer: '#B3261E',
+  },
+
+  Other: {
+    FocusRing: 'rgba(42, 125, 225, 0.35)',
+    Shadow: 'rgba(15, 23, 42, 0.15)',
+    Overlay: 'rgba(15, 23, 42, 0.4)',
+  },
+});
+
 export const silverTheme = createTheme(color, {
   Background: {
     Container: '#DEDEDE',

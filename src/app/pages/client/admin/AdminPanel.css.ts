@@ -24,6 +24,17 @@ export const AdminContent = style({
   },
 });
 
+export const AdminGrid = style({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+  gap: config.space.S300,
+  '@media': {
+    'screen and (max-width: 1100px)': {
+      gridTemplateColumns: 'minmax(0, 1fr)',
+    },
+  },
+});
+
 export const AdminFrameWrap = style({
   flex: 1,
   minHeight: 0,
@@ -72,4 +83,86 @@ export const AdminListRow = style({
   gap: config.space.S200,
   padding: `${config.space.S100} 0`,
   borderBottom: `${toRem(1)} solid ${color.SurfaceVariant.ContainerLine}`,
+  flexWrap: 'wrap',
+});
+
+export const AdminRequestList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: config.space.S200,
+});
+
+export const AdminRequestCard = style({
+  padding: config.space.S200,
+  borderRadius: config.radii.R400,
+  backgroundColor: color.SurfaceVariant.Container,
+  border: `${toRem(1)} solid ${color.SurfaceVariant.ContainerLine}`,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: config.space.S200,
+});
+
+export const AdminRequestHeader = style({
+  display: 'flex',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  gap: config.space.S200,
+});
+
+export const AdminRequestInputs = style({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+  gap: config.space.S150,
+  '@media': {
+    'screen and (max-width: 720px)': {
+      gridTemplateColumns: 'minmax(0, 1fr)',
+    },
+  },
+});
+
+export const AdminRequestActions = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: config.space.S100,
+});
+
+export const AdminStatus = style({
+  padding: `0 ${config.space.S100}`,
+  borderRadius: config.radii.R400,
+  fontSize: toRem(11),
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+});
+
+export const AdminStatusPending = style({
+  backgroundColor: color.SurfaceVariant.Container,
+  color: color.SurfaceVariant.OnContainer,
+  border: `${toRem(1)} solid ${color.SurfaceVariant.ContainerLine}`,
+});
+
+export const AdminStatusPayment = style({
+  backgroundColor: color.Warning.Container,
+  color: color.Warning.OnContainer,
+});
+
+export const AdminStatusApproved = style({
+  backgroundColor: color.Success.Container,
+  color: color.Success.OnContainer,
+});
+
+export const AdminStatusRejected = style({
+  backgroundColor: color.Critical.Container,
+  color: color.Critical.OnContainer,
+});
+
+export const AdminPlanPill = style({
+  padding: `0 ${config.space.S100}`,
+  borderRadius: config.radii.R400,
+  fontSize: toRem(11),
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+  backgroundColor: color.Primary.Container,
+  color: color.Primary.OnContainer,
 });

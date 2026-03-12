@@ -2,11 +2,13 @@ import React, { MouseEventHandler, forwardRef, useMemo, useRef, useState } from 
 import { useAtom, useAtomValue } from 'jotai';
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   Icon,
   IconButton,
   Icons,
+  Input,
   Menu,
   MenuItem,
   PopOut,
@@ -51,6 +53,8 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import classNames from 'classnames';
 import * as css from './Direct.css';
 
 type DirectMenuProps = {
@@ -173,10 +177,15 @@ export function Direct() {
   const mx = useMatrixClient();
   useNavToActivePathMapper('direct');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const directs = useDirectRooms();
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
+  const screenSize = useScreenSizeContext();
+  const isMobile = screenSize === ScreenSize.Mobile;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'All' | 'Unread' | 'Personal' | 'Groups' | 'Channels'>('All');
 
   const createDirectSelected = useDirectCreateSelected();
 
@@ -184,18 +193,82 @@ export function Direct() {
   const noRoomToDisplay = directs.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
-  const sortedDirects = useMemo(() => {
+  const filteredDirects = useMemo(() => {
     const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
+      const filtered = items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
+      return filtered;
     }
     return items;
   }, [mx, directs, closedCategories, roomToUnread, selectedRoomId]);
 
+  const unreadRooms = useMemo(
+    () => filteredDirects.filter((roomId) => (roomToUnread.get(roomId)?.total ?? 0) > 0),
+    [filteredDirects, roomToUnread]
+  );
+
+  const groupRooms = useMemo(
+    () =>
+      filteredDirects.filter((roomId) => {
+        const room = mx.getRoom(roomId);
+        const count = room?.getJoinedMemberCount?.() ?? 0;
+        return count > 2;
+      }),
+    [filteredDirects, mx]
+  );
+
+  const channelRooms = useMemo(
+    () =>
+      filteredDirects.filter((roomId) => {
+        const room = mx.getRoom(roomId);
+        return room?.getJoinRule?.() === 'public';
+      }),
+    [filteredDirects, mx]
+  );
+
+  const filterCounts = {
+    All: filteredDirects.length,
+    Unread: unreadRooms.length,
+    Personal: filteredDirects.length,
+    Groups: groupRooms.length,
+    Channels: channelRooms.length,
+  };
+
+  const tabFilteredDirects = useMemo(() => {
+    if (activeFilter === 'Unread') {
+      return unreadRooms;
+    }
+    if (activeFilter === 'Groups') {
+      return groupRooms;
+    }
+    if (activeFilter === 'Channels') {
+      return channelRooms;
+    }
+    return filteredDirects;
+  }, [activeFilter, filteredDirects, mx, unreadRooms]);
+
+  const searchTerm = searchQuery.trim().toLowerCase();
+  const searchedDirects = useMemo(() => {
+    if (!searchTerm) return tabFilteredDirects;
+    return tabFilteredDirects.filter((roomId) => {
+      const room = mx.getRoom(roomId);
+      const name = room?.name ?? '';
+      const alias = room?.getCanonicalAlias?.() ?? '';
+      return (
+        name.toLowerCase().includes(searchTerm) ||
+        alias.toLowerCase().includes(searchTerm) ||
+        roomId.toLowerCase().includes(searchTerm)
+      );
+    });
+  }, [mx, searchTerm, tabFilteredDirects]);
+
+  const noSearchResults = searchTerm.length > 0 && searchedDirects.length === 0;
+  const noFilterResults = searchTerm.length === 0 && tabFilteredDirects.length === 0;
+
   const virtualizer = useVirtualizer({
-    count: sortedDirects.length,
+    count: searchedDirects.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 76,
+    estimateSize: () => 84,
     overscan: 10,
   });
 
@@ -205,76 +278,202 @@ export function Direct() {
 
   return (
     <PageNav className={css.DirectPageNav}>
-      <DirectHeader />
+      {isMobile ? (
+        <Box className={css.DirectMobileHeader}>
+          <Text className={css.DirectTitle}>VChat</Text>
+          <IconButton variant="Background" fill="None" aria-label="Options">
+            <Icon src={Icons.VerticalDots} size="200" />
+          </IconButton>
+        </Box>
+      ) : (
+        <DirectHeader />
+      )}
+      <Box className={css.DirectSearchWrap}>
+        <Input
+          ref={searchInputRef}
+          className={css.DirectSearchInput}
+          value={searchQuery}
+          onChange={(evt) => setSearchQuery(evt.target.value)}
+          placeholder="Search Chats"
+          size="400"
+          variant="Background"
+          outlined={false}
+          radii="Pill"
+          before={<Icon src={Icons.Search} size="100" className={css.DirectSearchIcon} />}
+          after={
+            searchQuery.trim().length > 0 ? (
+              <IconButton
+                size="300"
+                radii="Pill"
+                variant="Background"
+                fill="None"
+                onClick={() => {
+                  setSearchQuery('');
+                  searchInputRef.current?.focus();
+                }}
+                aria-label="Clear search"
+              >
+                <Icon src={Icons.Cross} size="100" className={css.DirectSearchIcon} />
+              </IconButton>
+            ) : undefined
+          }
+        />
+      </Box>
+      {isMobile && (
+        <Box className={css.DirectFilters}>
+          {(['All', 'Unread', 'Personal', 'Groups', 'Channels'] as const).map((filter) => {
+            const isActive = activeFilter === filter;
+            const count = filterCounts[filter];
+            return (
+              <Box
+                as="button"
+                type="button"
+                key={filter}
+                className={classNames(
+                  css.DirectFilterButton,
+                  isActive && css.DirectFilterButtonActive
+                )}
+                onClick={() => setActiveFilter(filter)}
+              >
+                <Text as="span" size="B300">
+                  {filter}
+                </Text>
+                {count > 0 && (
+                  <Badge size="200" variant="Secondary" fill="Solid" radii="Pill">
+                    <Text as="span" size="L400">
+                      {count}
+                    </Text>
+                  </Badge>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+      )}
       {noRoomToDisplay ? (
         <DirectEmpty />
       ) : (
         <PageNavContent scrollRef={scrollRef}>
-          <Box direction="Column" gap="300">
-            <NavCategory>
-              <NavItem variant="Background" radii="400" aria-selected={createDirectSelected}>
-                <NavButton onClick={() => navigate(getDirectCreatePath())}>
-                  <NavItemContent>
-                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                      <Avatar size="200" radii="400">
-                        <Icon src={Icons.Plus} size="100" />
-                      </Avatar>
-                      <Box as="span" grow="Yes">
-                        <Text as="span" size="Inherit" truncate>
-                          Create Chat
-                        </Text>
-                      </Box>
-                    </Box>
-                  </NavItemContent>
-                </NavButton>
-              </NavItem>
-            </NavCategory>
-            <NavCategory>
-              <NavCategoryHeader>
-                <RoomNavCategoryButton
-                  closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
-                  data-category-id={DEFAULT_CATEGORY_ID}
-                  onClick={handleCategoryClick}
+          {isMobile && (
+            <Box className={css.DirectArchivedCard}>
+              <Box className={css.DirectArchivedRow}>
+                <Avatar size="300" radii="Pill">
+                  <Icon src={Icons.Inbox} size="200" />
+                </Avatar>
+                <Box direction="Column" gap="50">
+                  <Text className={css.DirectArchivedTitle}>Archived Chats</Text>
+                  <Text className={css.DirectArchivedSubtitle} truncate>
+                    Chats you've archived will appear here.
+                  </Text>
+                </Box>
+                <Badge size="200" variant="Secondary" fill="Soft" radii="Pill">
+                  <Text as="span" size="L400">
+                    {Math.min(filterCounts.All, 9)}
+                  </Text>
+                </Badge>
+              </Box>
+            </Box>
+          )}
+          {noSearchResults || noFilterResults ? (
+            <NavEmptyCenter>
+              <NavEmptyLayout
+                icon={<Icon size="600" src={Icons.Search} />}
+                title={
+                  <Text size="H5" align="Center">
+                    {noFilterResults ? 'No chats here' : 'No matches'}
+                  </Text>
+                }
+                content={
+                  <Text size="T300" align="Center">
+                    {noFilterResults
+                      ? 'Try a different filter to see chats.'
+                      : 'Try a different name or Matrix ID.'}
+                  </Text>
+                }
+              />
+            </NavEmptyCenter>
+          ) : (
+            <Box direction="Column" gap="300">
+              {!isMobile && (
+                <NavCategory>
+                  <NavItem variant="Background" radii="400" aria-selected={createDirectSelected}>
+                    <NavButton onClick={() => navigate(getDirectCreatePath())}>
+                      <NavItemContent>
+                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                          <Avatar size="200" radii="400">
+                            <Icon src={Icons.Plus} size="100" />
+                          </Avatar>
+                          <Box as="span" grow="Yes">
+                            <Text as="span" size="Inherit" truncate>
+                              Create Chat
+                            </Text>
+                          </Box>
+                        </Box>
+                      </NavItemContent>
+                    </NavButton>
+                  </NavItem>
+                </NavCategory>
+              )}
+              <NavCategory>
+                <NavCategoryHeader>
+                  <RoomNavCategoryButton
+                    closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
+                    data-category-id={DEFAULT_CATEGORY_ID}
+                    onClick={handleCategoryClick}
+                  >
+                    Chats
+                  </RoomNavCategoryButton>
+                </NavCategoryHeader>
+                <div
+                  style={{
+                    position: 'relative',
+                    height: virtualizer.getTotalSize(),
+                  }}
                 >
-                  Chats
-                </RoomNavCategoryButton>
-              </NavCategoryHeader>
-              <div
-                style={{
-                  position: 'relative',
-                  height: virtualizer.getTotalSize(),
-                }}
-              >
-                {virtualizer.getVirtualItems().map((vItem) => {
-                  const roomId = sortedDirects[vItem.index];
-                  const room = mx.getRoom(roomId);
-                  if (!room) return null;
-                  const selected = selectedRoomId === roomId;
+                  {virtualizer.getVirtualItems().map((vItem) => {
+                    const roomId = searchedDirects[vItem.index];
+                    const room = mx.getRoom(roomId);
+                    if (!room) return null;
+                    const selected = selectedRoomId === roomId;
 
-                  return (
-                    <VirtualTile
-                      virtualItem={vItem}
-                      key={vItem.index}
-                      ref={virtualizer.measureElement}
-                    >
-                      <RoomNavItem
-                        room={room}
-                        selected={selected}
-                        showAvatar
-                        direct
-                        linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
-                        notificationMode={getRoomNotificationMode(
-                          notificationPreferences,
-                          room.roomId
-                        )}
-                      />
-                    </VirtualTile>
-                  );
-                })}
-              </div>
-            </NavCategory>
-          </Box>
+                    return (
+                      <VirtualTile
+                        virtualItem={vItem}
+                        key={vItem.index}
+                        ref={virtualizer.measureElement}
+                      >
+                        <RoomNavItem
+                          room={room}
+                          selected={selected}
+                          showAvatar
+                          direct
+                          linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                          notificationMode={getRoomNotificationMode(
+                            notificationPreferences,
+                            room.roomId
+                          )}
+                        />
+                      </VirtualTile>
+                    );
+                  })}
+                </div>
+              </NavCategory>
+            </Box>
+          )}
         </PageNavContent>
+      )}
+      {isMobile && (
+        <>
+          <IconButton
+            className={css.DirectFab}
+            variant="Primary"
+            radii="Pill"
+            onClick={() => navigate(getDirectCreatePath())}
+            aria-label="New chat"
+          >
+            <Icon src={Icons.Plus} />
+          </IconButton>
+        </>
       )}
     </PageNav>
   );

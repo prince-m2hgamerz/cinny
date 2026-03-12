@@ -56,6 +56,13 @@
     "identityRoom": "#vchat:vgram.m2hio.in",
     "allowedUserIds": ["@m2h:vgram.m2hio.in"]
   },
+  "premium": {
+    "enabled": true,
+    "monthlyPrice": "₹299",
+    "yearlyPrice": "₹2499",
+    "yearlyDiscount": "Save 30%",
+    "identityRoom": "#vchat:vgram.m2hio.in"
+  },
 
   "hashRouter": {
     "enabled": false,

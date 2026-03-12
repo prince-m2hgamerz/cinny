@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Text,
@@ -43,6 +44,9 @@ import { ModalWide } from '../../../styles/Modal.css';
 import { createUploadAtom, UploadSuccess } from '../../../state/upload';
 import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { useCapabilities } from '../../../hooks/useCapabilities';
+import { usePremiumStatus } from '../../../hooks/usePremium';
+import { PREMIUM_PATH } from '../../../pages/paths';
+import { PremiumBadge } from '../../../components/PremiumBadge';
 
 type ProfileProps = {
   profile: UserProfile;
@@ -307,6 +311,10 @@ export function Profile() {
   const mx = useMatrixClient();
   const userId = mx.getUserId()!;
   const profile = useUserProfile(userId);
+  const navigate = useNavigate();
+  const premium = usePremiumStatus(userId);
+  const expiryLabel = premium.until ? new Date(premium.until).toLocaleDateString() : '—';
+  const planLabel = premium.plan ? premium.plan.toUpperCase() : 'FREE';
 
   return (
     <Box direction="Column" gap="100">
@@ -319,6 +327,39 @@ export function Profile() {
       >
         <ProfileAvatar userId={userId} profile={profile} />
         <ProfileDisplayName userId={userId} profile={profile} />
+        <SettingTile
+          title={
+            <Text as="span" size="L400">
+              Premium
+            </Text>
+          }
+          after={
+            <Button
+              size="300"
+              variant={premium.active ? 'Secondary' : 'Primary'}
+              fill={premium.active ? 'Soft' : 'Solid'}
+              radii="300"
+              onClick={() => navigate(PREMIUM_PATH)}
+            >
+              <Text size="B300">{premium.active ? 'Manage' : 'Upgrade'}</Text>
+            </Button>
+          }
+        >
+          <Box direction="Column" gap="50">
+            <Box alignItems="Center" gap="100">
+              {premium.active && <PremiumBadge size="200" title="Premium active" />}
+              <Text size="T200">Status: {premium.active ? 'Active' : 'Free'}</Text>
+            </Box>
+            <Text size="T200" priority="300">
+              Plan: {planLabel}
+            </Text>
+            {premium.active && (
+              <Text size="T200" priority="300">
+                Expires: {expiryLabel}
+              </Text>
+            )}
+          </Box>
+        </SettingTile>
       </SequenceCard>
     </Box>
   );

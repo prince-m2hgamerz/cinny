@@ -1,4 +1,5 @@
 import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
 import FocusTrap from 'focus-trap-react';
 import {
@@ -471,7 +472,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
 
   return (
     <PageHeader
-      className={ContainerColor({ variant: 'Surface' })}
+      className={classNames(ContainerColor({ variant: 'Surface' }), css.RoomHeader)}
       balance={screenSize === ScreenSize.Mobile}
     >
       <Box grow="Yes" gap="300">

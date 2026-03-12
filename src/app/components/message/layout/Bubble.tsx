@@ -30,34 +30,47 @@ type BubbleLayoutProps = {
   hideBubble?: boolean;
   before?: ReactNode;
   header?: ReactNode;
+  align?: 'Start' | 'End';
 };
 
 export const BubbleLayout = as<'div', BubbleLayoutProps>(
-  ({ hideBubble, before, header, children, ...props }, ref) => (
-    <Box gap="300" {...props} ref={ref}>
-      <Box className={css.BubbleBefore} shrink="No">
-        {before}
-      </Box>
-      <Box grow="Yes" direction="Column">
-        {header}
-        {hideBubble ? (
-          children
-        ) : (
-          <Box>
-            <Box
-              className={
-                hideBubble
-                  ? undefined
-                  : classNames(css.BubbleContent, before ? css.BubbleContentArrowLeft : undefined)
-              }
-              direction="Column"
-            >
-              {before ? <BubbleLeftArrow variant="SurfaceVariant" /> : null}
-              {children}
+  ({ hideBubble, before, header, align = 'Start', children, ...props }, ref) => {
+    const alignEnd = align === 'End';
+
+    return (
+      <Box
+        gap="300"
+        className={classNames(css.BubbleRow, alignEnd ? css.BubbleRowEnd : undefined)}
+        {...props}
+        ref={ref}
+      >
+        <Box
+          className={classNames(css.BubbleBefore, !before ? css.BubbleBeforeHidden : undefined)}
+          shrink="No"
+        >
+          {before}
+        </Box>
+        <Box grow="Yes" direction="Column">
+          {header}
+          {hideBubble ? (
+            children
+          ) : (
+            <Box>
+              <Box
+                className={classNames(
+                  css.BubbleContent,
+                  before ? css.BubbleContentArrowLeft : undefined,
+                  alignEnd ? css.BubbleContentOwn : undefined
+                )}
+                direction="Column"
+              >
+                {before ? <BubbleLeftArrow variant="Surface" /> : null}
+                {children}
+              </Box>
             </Box>
-          </Box>
-        )}
+          )}
+        </Box>
       </Box>
-    </Box>
-  )
+    );
+  }
 );

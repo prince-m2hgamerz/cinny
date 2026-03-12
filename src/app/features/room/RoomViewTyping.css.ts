@@ -15,10 +15,11 @@ export const RoomViewTyping = style([
   {
     padding: `0 ${config.space.S500}`,
     width: '100%',
-    backgroundColor: color.Surface.Container,
+    backgroundColor: color.Background.Container,
     color: color.Surface.OnContainer,
     position: 'absolute',
     bottom: 0,
+    borderTop: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
     animation: `${SlideUpAnime} 100ms ease-in-out`,
   },
 ]);

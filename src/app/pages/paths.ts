@@ -86,6 +86,7 @@ export const INBOX_NOTIFICATIONS_PATH = `/inbox/${_NOTIFICATIONS_PATH}`;
 export const INBOX_INVITES_PATH = `/inbox/${_INVITES_PATH}`;
 
 export const ADMIN_PATH = '/admin/';
+export const PREMIUM_PATH = '/premium/';
 
 export const SPACE_SETTINGS_PATH = '/space-settings/';
 

@@ -85,6 +85,15 @@ const getRequestBody = (req) =>
     req.on('error', reject);
   });
 
+const applyQueryToRequest = (req) => {
+  try {
+    const url = new URL(req.url, 'http://localhost');
+    req.query = Object.fromEntries(url.searchParams.entries());
+  } catch {
+    req.query = {};
+  }
+};
+
 function serveLocalReportApi() {
   let reportHandlerPromise;
 
@@ -137,6 +146,59 @@ function serveLocalReportApi() {
   };
 }
 
+function serveLocalPremiumApi() {
+  let premiumHandlerPromise;
+
+  const loadPremiumHandler = async () => {
+    if (!premiumHandlerPromise) {
+      premiumHandlerPromise = import(new URL('./api/premium-request.js', import.meta.url).href).then(
+        (module) => module.default
+      );
+    }
+
+    return premiumHandlerPromise;
+  };
+
+  const handlePremiumRequest = async (req, res, next) => {
+    const pathname = req.url?.split('?')[0];
+    if (pathname !== '/api/premium-request') {
+      next();
+      return;
+    }
+
+    try {
+      applyQueryToRequest(req);
+      if ((req.method === 'POST' || req.method === 'PATCH') && req.body === undefined) {
+        req.body = await getRequestBody(req);
+      }
+
+      const premiumHandler = await loadPremiumHandler();
+      await premiumHandler(req, res);
+    } catch (error) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(
+        JSON.stringify({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to process premium request on the local server',
+        })
+      );
+    }
+  };
+
+  return {
+    name: 'vite-plugin-serve-local-premium-api',
+    configureServer(server) {
+      server.middlewares.use(handlePremiumRequest);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handlePremiumRequest);
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
@@ -146,6 +208,15 @@ export default defineConfig(({ mode }) => {
 
   if (!process.env.TELEGRAM_REPORT_CHANNEL_ID && env.TELEGRAM_REPORT_CHANNEL_ID) {
     process.env.TELEGRAM_REPORT_CHANNEL_ID = env.TELEGRAM_REPORT_CHANNEL_ID;
+  }
+  if (!process.env.MONGODB_URI && env.MONGODB_URI) {
+    process.env.MONGODB_URI = env.MONGODB_URI;
+  }
+  if (!process.env.MONGODB_DB && env.MONGODB_DB) {
+    process.env.MONGODB_DB = env.MONGODB_DB;
+  }
+  if (!process.env.MONGODB_PREMIUM_COLLECTION && env.MONGODB_PREMIUM_COLLECTION) {
+    process.env.MONGODB_PREMIUM_COLLECTION = env.MONGODB_PREMIUM_COLLECTION;
   }
 
   return {
@@ -162,6 +233,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       serveLocalReportApi(),
+      serveLocalPremiumApi(),
       serverMatrixSdkCryptoWasm('/node_modules/.vite/deps/pkg/matrix_sdk_crypto_wasm_bg.wasm'),
       topLevelAwait({
         // The export name of top-level await promise for each chunk module

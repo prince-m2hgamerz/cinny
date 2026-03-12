@@ -17,6 +17,7 @@ import {
   LOGIN_PATH,
   INBOX_PATH,
   ADMIN_PATH,
+  PREMIUM_PATH,
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
   SPACE_PATH,
@@ -47,6 +48,7 @@ import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from '
 import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
 import { AdminPanel } from './client/admin/AdminPanel';
+import { Premium } from './client/premium';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
@@ -69,6 +71,7 @@ import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
+import { PremiumModalRenderer } from '../components/PremiumModal';
 import { getFallbackSession } from '../state/sessions';
 import { CallStatusRenderer } from './CallStatusRenderer';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
@@ -143,6 +146,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                         <LegacyCallProvider />
                       </CallEmbedProvider>
                       <SearchModalRenderer />
+                      <PremiumModalRenderer />
                       <UserRoomProfileRenderer />
                       <CreateRoomModalRenderer />
                       <CreateSpaceModalRenderer />
@@ -300,6 +304,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           <Route path={_INVITES_PATH} element={<Invites />} />
         </Route>
         <Route path={ADMIN_PATH} element={<AdminPanel />} />
+        <Route path={PREMIUM_PATH} element={<Premium />} />
       </Route>
       <Route path="/*" element={<p>Page not found</p>} />
     </Route>
